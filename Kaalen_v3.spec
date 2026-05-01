@@ -7,7 +7,12 @@ a = Analysis(
     pathex=['.'], 
     binaries=[],
     datas=[
-        ('resources_rc.py', '.'),
+        ('pfid_tab.ui', '.'),
+        ('global_fit.ui', '.'),
+        ('exponential_fit_UI.ui', '.'),
+        ('peak_fit_UI.ui', '.'),
+        ('dispersion_correction.ui', '.'),
+        ('mainwindow.ui', '.'),
         ('icon.ico', '.'), 
     ],
     hiddenimports=[
