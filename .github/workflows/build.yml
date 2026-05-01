@@ -1,0 +1,96 @@
+name: Create Windows Installer
+
+on:
+  # Triggers the workflow on push to the main branch
+  push:
+    branches: [ main ]
+  # Allows manual triggering from the GitHub Actions tab
+  workflow_dispatch:
+  # Keep this, but it will no longer be the primary release trigger
+  release:
+    types: [published]
+
+jobs:
+  build_executable:
+    name: 1. Build PyInstaller Executable
+    runs-on: windows-latest
+    
+    steps:
+    - name: ⬇️ Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10' 
+
+    - name: 📦 Install Python Dependencies
+      # Install packages in a specific order known to minimize PyQt/SciPy issues
+      run: |
+        python -m pip install --upgrade pip
+        # Pinning PyInstaller to known stable version and installing all dependencies
+        pip install pyinstaller==6.2.0 -r requirements.txt
+        Write-Host "Dependencies installed successfully."
+
+    - name: 🔧 Generate Executable (PyInstaller) - Force Build
+      run: |
+        Remove-Item -Path "build", "dist" -Recurse -ErrorAction SilentlyContinue
+        # Use the now committed Kaalen_App.spec file
+        python -m PyInstaller -y --clean Kaalen_App.spec
+        
+        if (-not (Test-Path -Path "dist\Kaalen_App")) {
+            throw "PyInstaller failed to create the 'dist\Kaalen_App' bundle. Check detailed logs above for collection errors."
+        }
+    
+    - name: ⬆️ Upload Executable as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: kaalen-pyinstaller-bundle
+        path: dist/Kaalen_App/ 
+        retention-days: 1
+
+  build_installer:
+    name: 2. Compile Final Installer
+    runs-on: windows-latest
+    needs: [build_executable]
+    # FIX: Add permissions block to grant write access to the GITHUB_TOKEN for creating the release and tag
+    permissions:
+      contents: write
+
+    steps:
+    - name: ⬇️ Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: ⬇️ Download Executable Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: kaalen-pyinstaller-bundle
+        path: dist/Kaalen_App/ 
+        
+    - name: ⚙️ Install Inno Setup Compiler
+      run: choco install innosetup --no-progress
+
+    - name: 💾 Compile Installer (Inno Setup)
+      run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_Installer.iss"'
+
+    - name: 🚀 Upload Installer to Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Kaalen-Windows-Installer
+        path: Output_Installer/Kaalen_Setup_v2.0.exe
+        
+    # NEW STEP ADDED: PUBLISH TO GITHUB RELEASE
+    - name: 🎁 Publish Installer to GitHub Release
+      # ADDED: This condition ensures the release runs ONLY on push to the main branch
+      uses: softprops/action-gh-release@v2
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      with:
+        # NEW: We create a unique tag based on the commit hash (SHA)
+        tag_name: auto-release-${{ github.sha }}
+        name: Automatic Build - ${{ github.sha }}
+        draft: false
+        prerelease: false
+        # Attaches the compiled installer file to the new release
+        files: Output_Installer/Kaalen_Setup_v2.0.exe
+        # This uses the default GITHUB_TOKEN to authenticate
+        token: ${{ secrets.GITHUB_TOKEN }}
