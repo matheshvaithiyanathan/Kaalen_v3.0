@@ -72,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Kaalen-Windows-Setup
-          path: Output_Installer/Kaalen_v3_Setup.exe
+          path: Output_Installer/Kaalen_v3_windows_Setup.exe
 
   # STEP 3: Combine everything into one single Release
   create-release:
@@ -93,7 +93,7 @@ jobs:
           cd all-artifacts/Kaalen-macos-latest && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
           cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
           # Copy the Windows Installer exe
-          cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
+          cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_windows_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
