@@ -35,7 +35,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           Remove-Item -Path "build", "dist" -Recurse -ErrorAction SilentlyContinue
-          python -m PyInstaller -y --clean Kaalen_v3App.spec
+          python -m PyInstaller -y --clean Kaalen_v3.spec
         shell: powershell
 
       - name: ⚙️ Install Inno Setup Compiler (Windows)
@@ -62,9 +62,9 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           if [ "${{ matrix.os }}" == "macos-latest" ]; then
-            pyinstaller App_PP.py --windowed --onefile --distpath build/macos --name Kaalen-v3.0 --icon icon.ico
+            pyinstaller kaalen_v3.py --windowed --onefile --distpath build/macos --name Kaalen-v3.0 --icon icon.ico
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            pyinstaller App_PP.py --onefile --distpath build/linux --name Kaalen-v3.0
+            pyinstaller kaalen_v3.py --onefile --distpath build/linux --name Kaalen-v3.0
             chmod +x build/linux/Kaalen-v3.0
             printf "[Desktop Entry]\nName=Kaalen Spectroscopy App\nComment=2D Spectroscopy Data Analysis Tool\nExec=./Kaalen-v3.0\nIcon=icon.ico\nTerminal=false\nType=Application\n" > build/linux/Kaalen-v3.0.desktop
             cp icon.ico build/linux/icon.ico
