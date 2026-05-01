@@ -15,10 +15,10 @@ SetupIconFile=icon.ico
 WizardStyle=modern
 
 [Registry]
-Root: "HKLM"; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Kaalen_App"; ValueType: "none"; Flags: deletekey;
+Root: "HKLM"; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Kaalen_v3"; ValueType: "none"; Flags: deletekey;
 
 [Files]
-Source: "dist\Kaalen_App\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\Kaalen_v3\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\Kaalen v3"; Filename: "{app}\Kaalen_v3.exe"; IconFilename: "{app}\Kaalen_v3.exe"; WorkingDir: "{app}"
