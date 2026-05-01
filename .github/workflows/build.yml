@@ -1,96 +1,138 @@
-name: Create Windows Installer
+name: Build and Package Multi-OS Release
 
 on:
-  # Triggers the workflow on push to the main branch
   push:
-    branches: [ main ]
-  # Allows manual triggering from the GitHub Actions tab
+    branches: [ main, develop ]
   workflow_dispatch:
-  # Keep this, but it will no longer be the primary release trigger
-  release:
-    types: [published]
 
 jobs:
-  build_executable:
-    name: 1. Build PyInstaller Executable
-    runs-on: windows-latest
+  build-all:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-22.04]
     
     steps:
-    - name: ⬇️ Checkout Repository
-      uses: actions/checkout@v4
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: 🐍 Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10' 
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: 📦 Install Python Dependencies
-      # Install packages in a specific order known to minimize PyQt/SciPy issues
-      run: |
-        python -m pip install --upgrade pip
-        # Pinning PyInstaller to known stable version and installing all dependencies
-        pip install pyinstaller==6.2.0 -r requirements.txt
-        Write-Host "Dependencies installed successfully."
+      - name: 📦 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller==6.2.0 -r requirements.txt
+        shell: bash
 
-    - name: 🔧 Generate Executable (PyInstaller) - Force Build
-      run: |
-        Remove-Item -Path "build", "dist" -Recurse -ErrorAction SilentlyContinue
-        # Use the now committed Kaalen_App.spec file
-        python -m PyInstaller -y --clean Kaalen_App.spec
-        
-        if (-not (Test-Path -Path "dist\Kaalen_App")) {
-            throw "PyInstaller failed to create the 'dist\Kaalen_App' bundle. Check detailed logs above for collection errors."
-        }
-    
-    - name: ⬆️ Upload Executable as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: kaalen-pyinstaller-bundle
-        path: dist/Kaalen_App/ 
-        retention-days: 1
+      # ---------------------------------------------------------
+      # WINDOWS SPECIFIC STEPS (PyInstaller .spec + Inno Setup)
+      # ---------------------------------------------------------
+      - name: 🔧 Generate Windows Executable (PyInstaller)
+        if: matrix.os == 'windows-latest'
+        run: |
+          Remove-Item -Path "build", "dist" -Recurse -ErrorAction SilentlyContinue
+          python -m PyInstaller -y --clean Kaalen_v3App.spec
+        shell: powershell
 
-  build_installer:
-    name: 2. Compile Final Installer
-    runs-on: windows-latest
-    needs: [build_executable]
-    # FIX: Add permissions block to grant write access to the GITHUB_TOKEN for creating the release and tag
+      - name: ⚙️ Install Inno Setup Compiler (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install innosetup --no-progress
+
+      - name: 💾 Compile Windows Installer
+        if: matrix.os == 'windows-latest'
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
+        shell: powershell
+
+      - name: ⬆️ Upload Windows Installer Artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaalen_v3-windows-installer
+          path: Output_Installer/Kaalen_v3_windows_Setup.exe
+          retention-days: 1
+
+      # ---------------------------------------------------------
+      # MAC & LINUX SPECIFIC STEPS (PyInstaller CLI args)
+      # ---------------------------------------------------------
+      - name: 🔧 Generate macOS & Linux Executables
+        if: matrix.os != 'windows-latest'
+        run: |
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+            pyinstaller App_PP.py --windowed --onefile --distpath build/macos --name Kaalen-v3.0 --icon icon.ico
+          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
+            pyinstaller App_PP.py --onefile --distpath build/linux --name Kaalen-v3.0
+            chmod +x build/linux/Kaalen-v3.0
+            printf "[Desktop Entry]\nName=Kaalen Spectroscopy App\nComment=2D Spectroscopy Data Analysis Tool\nExec=./Kaalen-v3.0\nIcon=icon.ico\nTerminal=false\nType=Application\n" > build/linux/Kaalen-v3.0.desktop
+            cp icon.ico build/linux/icon.ico
+          fi
+        shell: bash
+
+      - name: ⬆️ Upload macOS Artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaalen_v3-macos
+          path: build/macos/*
+          retention-days: 1
+
+      - name: ⬆️ Upload Linux Artifact
+        if: matrix.os == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaalen_v3-linux
+          path: build/linux/*
+          retention-days: 1
+
+  # ---------------------------------------------------------
+  # CREATE FINAL GITHUB RELEASE (Runs after all OS builds finish)
+  # ---------------------------------------------------------
+  create-release:
+    name: 🎁 Create GitHub Release
+    needs: build-all
+    runs-on: ubuntu-latest
     permissions:
       contents: write
+    # Optional: Ensures an official release is only drafted when pushing to main
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
-    - name: ⬇️ Checkout Repository
-      uses: actions/checkout@v4
-      
-    - name: ⬇️ Download Executable Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: kaalen-pyinstaller-bundle
-        path: dist/Kaalen_App/ 
-        
-    - name: ⚙️ Install Inno Setup Compiler
-      run: choco install innosetup --no-progress
+      - name: ⬇️ Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-    - name: 💾 Compile Installer (Inno Setup)
-      run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_Installer.iss"'
+      - name: 🗜️ Zip macOS artifact
+        run: |
+          cd artifacts/Kaalen_v3-macos
+          zip -r ../../Kaalen_v3-macos.zip .
 
-    - name: 🚀 Upload Installer to Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kaalen-Windows-Installer
-        path: Output_Installer/Kaalen_Setup_v2.0.exe
-        
-    # NEW STEP ADDED: PUBLISH TO GITHUB RELEASE
-    - name: 🎁 Publish Installer to GitHub Release
-      # ADDED: This condition ensures the release runs ONLY on push to the main branch
-      uses: softprops/action-gh-release@v2
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      with:
-        # NEW: We create a unique tag based on the commit hash (SHA)
-        tag_name: auto-release-${{ github.sha }}
-        name: Automatic Build - ${{ github.sha }}
-        draft: false
-        prerelease: false
-        # Attaches the compiled installer file to the new release
-        files: Output_Installer/Kaalen_Setup_v2.0.exe
-        # This uses the default GITHUB_TOKEN to authenticate
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🗜️ Zip Linux artifact
+        run: |
+          cd artifacts/Kaalen_v3-linux
+          zip -r ../../Kaalen_v3-linux.zip .
+
+      - name: 🚀 Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/Kaalen_v3-windows-installer/Kaalen_v3_windows_Setup.exe
+            Kaalen_v3-macos.zip
+            Kaalen_v3-linux.zip
+          name: Release ${{ github.ref_name }} - ${{ github.sha }}
+          tag_name: release-${{ github.sha }}
+          body: |
+            This is an automated release.
+            
+            This release includes standalone executables for Windows, macOS, and Linux.
+            
+            *   **Windows:** Download and run `Kaalen_v3_windows_Setup.exe` to install.
+            *   **macOS:** Download and extract `Kaalen_v3-macos.zip`.
+            *   **Linux:** Extract `Kaalen_v3-linux.zip`, double-click the **Kaalen-v3.0.desktop** file to launch.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
