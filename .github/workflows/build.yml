@@ -1,96 +1,113 @@
-name: Create Windows Installer
+name: Build and Package Multi-Platform App
 
 on:
-  # Triggers the workflow on push to the main branch
   push:
     branches: [ main ]
-  # Allows manual triggering from the GitHub Actions tab
   workflow_dispatch:
-  # Keep this, but it will no longer be the primary release trigger
-  release:
-    types: [published]
 
 jobs:
-  build_executable:
-    name: 1. Build PyInstaller Executable
-    runs-on: windows-latest
+  # STEP 1: Build the raw binaries for all platforms
+  build-binaries:
+    name: Build Binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-22.04]
     
     steps:
-    - name: ⬇️ Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: 🐍 Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10' 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: 📦 Install Python Dependencies
-      # Install packages in a specific order known to minimize PyQt/SciPy issues
-      run: |
-        python -m pip install --upgrade pip
-        # Pinning PyInstaller to known stable version and installing all dependencies
-        pip install pyinstaller==6.2.0 -r requirements.txt
-        Write-Host "Dependencies installed successfully."
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller==6.2.0 -r requirements.txt
 
-    - name: 🔧 Generate Executable (PyInstaller) - Force Build
-      run: |
-        Remove-Item -Path "build", "dist" -Recurse -ErrorAction SilentlyContinue
-        # Use the now committed Kaalen_v3.spec file
-        python -m PyInstaller -y --clean Kaalen_v3.spec
-        
-        if (-not (Test-Path -Path "dist\Kaalen_v3")) {
-            throw "PyInstaller failed to create the 'dist\Kaalen_v3' bundle. Check detailed logs above for collection errors."
-        }
-    
-    - name: ⬆️ Upload Executable as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: kaalen-pyinstaller-bundle
-        path: dist/Kaalen_v3/ 
-        retention-days: 1
+      - name: Build with PyInstaller
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            # Using your SPEC file for the main build to ensure UI files are included
+            python -m PyInstaller -y --clean Kaalen_v3.spec
+          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+            python -m PyInstaller --windowed --onefile --name Kaalen-macos Kaalen_v3.py
+          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
+            python -m PyInstaller --onefile --name Kaalen-linux Kaalen_v3.py
+          fi
+        shell: bash
 
-  build_installer:
-    name: 2. Compile Final Installer
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaalen-${{ matrix.os }}
+          # Path depends on your SPEC file settings; usually 'dist/'
+          path: dist/
+          retention-days: 1
+
+  # STEP 2: Create the Windows Installer (Runs only AFTER windows binary is built)
+  create-windows-installer:
+    name: Compile Windows Installer
+    needs: build-binaries
     runs-on: windows-latest
-    needs: [build_executable]
-    # FIX: Add permissions block to grant write access to the GITHUB_TOKEN for creating the release and tag
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Download Windows Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: Kaalen-windows-latest
+          path: dist/
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress
+
+      - name: Compile Installer
+        # Matches your previous successful ISCC command
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
+
+      - name: Upload Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaalen-Windows-Setup
+          path: Output_Installer/Kaalen_v3_Setup.exe
+
+  # STEP 3: Combine everything into one Release
+  create-release:
+    needs: [build-binaries, create-windows-installer]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-    - name: ⬇️ Checkout Repository
-      uses: actions/checkout@v4
-      
-    - name: ⬇️ Download Executable Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: kaalen-pyinstaller-bundle
-        path: dist/Kaalen_v3/ 
-        
-    - name: ⚙️ Install Inno Setup Compiler
-      run: choco install innosetup --no-progress
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
 
-    - name: 💾 Compile Installer (Inno Setup)
-      run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
+      - name: Prepare Release Assets
+        run: |
+          mkdir assets
+          # Zip the Mac and Linux folders
+          cd all-artifacts/Kaalen-macos-latest && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
+          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
+          # Zip the raw Windows binary folder
+          cd all-artifacts/Kaalen-windows-latest && zip -r ../../assets/Kaalen-v3-Windows-Portable.zip . && cd ../..
+          # Copy the Installer exe directly
+          cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
-    - name: 🚀 Upload Installer to Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kaalen_v3-Windows-Installer
-        path: Output_Installer/Kaalen_v3_windows_Setup.exe
-        
-    # NEW STEP ADDED: PUBLISH TO GITHUB RELEASE
-    - name: 🎁 Publish Installer to GitHub Release
-      # ADDED: This condition ensures the release runs ONLY on push to the main branch
-      uses: softprops/action-gh-release@v2
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      with:
-        # NEW: We create a unique tag based on the commit hash (SHA)
-        tag_name: auto-release-${{ github.sha }}
-        name: Automatic Build - ${{ github.sha }}
-        draft: false
-        prerelease: false
-        # Attaches the compiled installer file to the new release
-        files: Output_Installer/Kaalen_v3_windows_Setup.exe
-        # This uses the default GITHUB_TOKEN to authenticate
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release-${{ github.sha }}
+          name: Multi-Platform Release - ${{ github.ref_name }}
+          files: assets/*
+          body: |
+            Automated Release for Kaalen v3.
+            - **Windows**: Use the `.exe` installer for full installation or the Portable Zip.
+            - **macOS/Linux**: Use the respective Zip files.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
