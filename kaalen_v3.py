@@ -4,9 +4,18 @@
 
 import os
 import sys
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*sipPyTypeDict.*")
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
@@ -403,7 +412,7 @@ class PFIDFitterApp(QMainWindow):
     def __init__(self, main_window, x_axis_label='Probe wavenumber', y_axis_label='Time', z_axis_label='ΔOD', x_axis_unit='cm\u207B\u00B9',
                  y_axis_unit='ps', z_axis_unit='mOD', font_size=12):
         super().__init__(main_window)
-        uic.loadUi('pfid_tab.ui', self)
+        uic.loadUi(resource_path('pfid_tab.ui'), self)
 
         self.setWindowTitle("PFID (Photon-Frequency-ID) Fitting Analysis")
         self.setObjectName("PFID Fit")
@@ -703,7 +712,7 @@ class GlobalFitApp(QMainWindow):
                  x_axis_label='Probe wavenumber', y_axis_label='Time', z_axis_label='ΔOD',
                  x_axis_unit='cm\u207B\u00B9', y_axis_unit='ps', z_axis_unit='mOD', font_size=12):
         super().__init__(parent)
-        uic.loadUi('global_fit.ui', self)
+        uic.loadUi(resource_path('global_fit.ui'), self)
 
         self.setWindowTitle("Global Fitting Analysis")
         self.setObjectName("Global Fit")
@@ -1121,7 +1130,7 @@ class BaseFitterApp(QMainWindow):
 class ExponentialFitterApp(BaseFitterApp):
     def __init__(self, parent=None, x_data=None, y_data=None, xlabel="X-axis", ylabel="Y-axis", slice_axis_name="", slice_value=None, slice_unit="", is_spline_corrected=False):
         super().__init__(parent, x_data, y_data, xlabel, ylabel, "Exponential:", slice_axis_name, slice_value, slice_unit)
-        uic.loadUi('exponential_fit_UI.ui', self)
+        uic.loadUi(resource_path('exponential_fit_UI.ui'), self)
 
         self.setup_base_ui(
             plot_widget_to_replace=self.widget_3_EF,
@@ -1242,7 +1251,7 @@ class GaussianFitterApp(BaseFitterApp):
         title_prefix = f"{self.fitting_function_type} Fitter:"
 
         super().__init__(parent, x_data, y_data, xlabel, ylabel, title_prefix, slice_axis_name, slice_value, slice_unit)
-        uic.loadUi('peak_fit_UI.ui', self)
+        uic.loadUi(resource_path('peak_fit_UI.ui'), self)
 
         self.setup_base_ui(
             plot_widget_to_replace=self.widget_4_PF,
@@ -1413,7 +1422,7 @@ def fit_robust_dispersion_curve(wavelengths, t0_guesses, degree=2):
 class ChirpCorrectionApp(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        uic.loadUi('dispersion_correction.ui', self)
+        uic.loadUi(resource_path('dispersion_correction.ui'), self)
 
         self.setWindowTitle("Dispersion Correction")
 
@@ -1846,7 +1855,7 @@ class ChirpCorrectionApp(QMainWindow):
 class SignalPlotterApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('mainwindow.ui', self)
+        uic.loadUi(resource_path('mainwindow.ui'), self)
 
         self.base_title = "Kaalen-v3.0"
         self._current_project_file = None
