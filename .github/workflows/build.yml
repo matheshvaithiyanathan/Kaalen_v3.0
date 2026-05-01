@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-22.04]
+        os: [windows-latest, macos-14, ubuntu-22.04]
     
     steps:
       - name: Checkout Repository
@@ -33,7 +33,7 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             python -m PyInstaller -y --clean Kaalen_v3.spec
-          elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          elif [ "${{ matrix.os }}" == "macos-14" ]; then
             python -m PyInstaller --windowed --onefile --name Kaalen-macOS kaalen_v3.py
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
             python -m PyInstaller --onefile --name Kaalen-linux kaalen_v3.py
@@ -90,7 +90,7 @@ jobs:
         run: |
           mkdir assets
           # Zip Linux and Mac binaries
-          cd all-artifacts/Kaalen-macos-latest && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
+          cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
           cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
           # Copy the Windows Installer exe
           cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_windows_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
