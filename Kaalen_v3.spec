@@ -3,7 +3,7 @@
 block_cipher = None
 
 a = Analysis(
-    ['App_PP.py'],
+    ['kaalen_v3.py'], # <-- UPDATED: Points to your actual Python script
     pathex=['.'], 
     binaries=[],
     datas=[
@@ -64,4 +64,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='Kaalen_App')
+               name='Kaalen_v3')
