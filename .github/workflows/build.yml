@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # STEP 1: Build the raw binaries for all platforms
+  # STEP 1: Build raw binaries for Windows, macOS, and Linux
   build-binaries:
     name: Build Binary (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -29,14 +29,14 @@ jobs:
           pip install pyinstaller==6.2.0 -r requirements.txt
 
       - name: Build with PyInstaller
+        # Note: Linux/macOS use CLI flags because your SPEC file might contain Windows paths
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # Using your SPEC file for the main build to ensure UI files are included
             python -m PyInstaller -y --clean Kaalen_v3.spec
           elif [ "${{ matrix.os }}" == "macos-latest" ]; then
-            python -m PyInstaller --windowed --onefile --name Kaalen-macos Kaalen_v3.py
+            python -m PyInstaller --windowed --onefile --name Kaalen-macOS kaalen_v3.py
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            python -m PyInstaller --onefile --name Kaalen-linux Kaalen_v3.py
+            python -m PyInstaller --onefile --name Kaalen-linux kaalen_v3.py
           fi
         shell: bash
 
@@ -44,7 +44,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Kaalen-${{ matrix.os }}
-          # Path depends on your SPEC file settings; usually 'dist/'
           path: dist/
           retention-days: 1
 
@@ -67,7 +66,6 @@ jobs:
         run: choco install innosetup --no-progress
 
       - name: Compile Installer
-        # Matches your previous successful ISCC command
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
 
       - name: Upload Installer Artifact
@@ -76,7 +74,7 @@ jobs:
           name: Kaalen-Windows-Setup
           path: Output_Installer/Kaalen_v3_Setup.exe
 
-  # STEP 3: Combine everything into one Release
+  # STEP 3: Combine everything into one single Release
   create-release:
     needs: [build-binaries, create-windows-installer]
     runs-on: ubuntu-latest
@@ -91,23 +89,21 @@ jobs:
       - name: Prepare Release Assets
         run: |
           mkdir assets
-          # Zip the Mac and Linux folders
+          # Zip Linux and Mac binaries
           cd all-artifacts/Kaalen-macos-latest && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
           cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
-          # Zip the raw Windows binary folder
-          cd all-artifacts/Kaalen-windows-latest && zip -r ../../assets/Kaalen-v3-Windows-Portable.zip . && cd ../..
-          # Copy the Installer exe directly
+          # Copy the Windows Installer exe
           cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: release-${{ github.sha }}
-          name: Multi-Platform Release - ${{ github.ref_name }}
+          tag_name: v3.0-${{ github.sha }}
+          name: Kaalen v3.0 Release
           files: assets/*
           body: |
-            Automated Release for Kaalen v3.
-            - **Windows**: Use the `.exe` installer for full installation or the Portable Zip.
+            Standalone Spectroscopy Data Analysis Tool.
+            - **Windows**: Use Kaalen_v3_Windows_Setup.exe
             - **macOS/Linux**: Use the respective Zip files.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
