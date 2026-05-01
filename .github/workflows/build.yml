@@ -77,7 +77,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Kaalen_v3-Windows-Installer
-        path: Output_Installer/Kaalen_v3_Setup.exe
+        path: Output_Installer/Kaalen_v3_windows_Setup.exe
         
     # NEW STEP ADDED: PUBLISH TO GITHUB RELEASE
     - name: 🎁 Publish Installer to GitHub Release
@@ -91,6 +91,6 @@ jobs:
         draft: false
         prerelease: false
         # Attaches the compiled installer file to the new release
-        files: Output_Installer/Kaalen_v3_Setup.exe
+        files: Output_Installer/Kaalen_v3_windows_Setup.exe
         # This uses the default GITHUB_TOKEN to authenticate
         token: ${{ secrets.GITHUB_TOKEN }}
