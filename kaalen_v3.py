@@ -2924,11 +2924,14 @@ if __name__ == '__main__':
             pass
 
     app = QApplication(sys.argv)
+    app.setStyle('Fusion') 
     app.setStyleSheet("""
+        /* Default text color for the whole app */
         QWidget { 
             color: black; 
         }
         
+        /* Input boxes */
         QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
             background-color: white; 
             color: black; 
@@ -2952,6 +2955,24 @@ if __name__ == '__main__':
             background-color: #cce4f7; 
         }
         
+        /* Fix Matplotlib toolbar controls */
+        QToolBar {
+            background-color: transparent;
+            border: none;
+        }
+        QToolButton {
+            background-color: #e1e1e1;
+            border: 1px solid #adadad;
+            border-radius: 3px;
+            padding: 3px;
+            margin: 2px;
+        }
+        QToolButton:hover {
+            background-color: #e5f1fb;
+            border: 1px solid #0078d7;
+        }
+        
+        /* Fix the tabs */
         QTabBar::tab { 
             background-color: #e1e1e1; 
             color: black; 
@@ -2965,6 +2986,15 @@ if __name__ == '__main__':
         QTabBar::tab:selected { 
             background-color: white; 
             font-weight: bold;
+        }
+        
+        /* Make the close (X) icon on tabs visible */
+        QTabBar::close-button {
+            background-color: #b0b0b0; 
+            border-radius: 2px;
+        }
+        QTabBar::close-button:hover {
+            background-color: #ff5555; /* Turns red when hovered */
         }
     """)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
