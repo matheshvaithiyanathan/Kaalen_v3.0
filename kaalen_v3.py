@@ -2924,11 +2924,12 @@ if __name__ == '__main__':
             pass
 
     app = QApplication(sys.argv)
-    app.setStyle('Fusion') 
     app.setStyleSheet("""
-        QWidget { color: white; }
-        QLineEdit { background-color: white; color: black; }
-        QTextEdit { background-color: white;}
+        QWidget { color: black; } /* Makes all text black by default */
+        QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
+            background-color: white; 
+            color: black; 
+        }
     """)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
     window = SignalPlotterApp()
