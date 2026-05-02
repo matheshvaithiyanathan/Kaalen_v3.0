@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1813</width>
+    <height>1219</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #fafff5 
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget_GF">
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QWidget" name="widget_GF_2" native="true">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1">
+       <property name="spacing">
+        <number>1</number>
+       </property>
+       <property name="leftMargin">
+        <number>1</number>
+       </property>
+       <property name="topMargin">
+        <number>1</number>
+       </property>
+       <property name="rightMargin">
+        <number>1</number>
+       </property>
+       <property name="bottomMargin">
+        <number>1</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="widget_2_GF_2" native="true">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
+          <property name="spacing">
+           <number>1</number>
+          </property>
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>1</number>
+          </property>
+          <property name="rightMargin">
+           <number>1</number>
+          </property>
+          <property name="bottomMargin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_4_GF" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,1,1,1,1,1">
+             <property name="spacing">
+              <number>1</number>
+             </property>
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item>
+              <widget class="QWidget" name="widget_6_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout">
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="0" column="3">
+                 <widget class="QLineEdit" name="lineEdit_2_GF"/>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_2_GF">
+                  <property name="text">
+                   <string>Time min:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEdit_GF"/>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_3_GF">
+                  <property name="text">
+                   <string>Time max:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_4_GF">
+                  <property name="text">
+                   <string>Probe min:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="lineEdit_3_GF"/>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QLineEdit" name="lineEdit_4_GF"/>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLabel" name="label_5_GF">
+                  <property name="text">
+                   <string>Probe max:</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="widget_7_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,0,0,0,0">
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="1" column="3">
+                 <widget class="QLineEdit" name="lineEdit_5_GF"/>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="label_7_GF">
+                  <property name="text">
+                   <string>No. of Components:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="label_6_GF">
+                  <property name="text">
+                   <string>Model options:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QCheckBox" name="checkBox_GF">
+                  <property name="text">
+                   <string>Use Gaussian convoluted Model</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="4">
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>80</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="widget_8_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout_3">
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="0" column="4">
+                 <widget class="QLineEdit" name="lineEdit_7_GF"/>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QLabel" name="label_9_GF">
+                  <property name="text">
+                   <string>t0 Width:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QCheckBox" name="checkBox_2_GF">
+                  <property name="text">
+                   <string>Fix</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEdit_6_GF"/>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_8_GF">
+                  <property name="text">
+                   <string>t0:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="5">
+                 <widget class="QCheckBox" name="checkBox_3_GF">
+                  <property name="text">
+                   <string>Fix</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="widget_9_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout_4">
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_10_GF">
+                  <property name="text">
+                   <string>Initial Guesses (comma seperated):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEdit_8_GF"/>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_12_GF">
+                  <property name="text">
+                   <string>Fixed Long time constant (ps):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLineEdit" name="lineEdit_9_GF"/>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QCheckBox" name="checkBox_4_GF">
+                  <property name="text">
+                   <string>Use SVD for Initial Guesses</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="label_11_GF">
+                  <property name="text">
+                   <string>Note: Append ':' to fix the value (e.g., 2.0:, 10.0:, etc)</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="widget_10_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout_5">
+                <property name="leftMargin">
+                 <number>9</number>
+                </property>
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="rightMargin">
+                 <number>9</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_13_GF">
+                  <property name="text">
+                   <string>Probe units to plot (comma seperated):</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEdit_10_GF"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="widget_11_GF" native="true">
+               <layout class="QGridLayout" name="gridLayout_6">
+                <property name="topMargin">
+                 <number>1</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>1</number>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_14_GF">
+                  <property name="text">
+                   <string>DAS interpolation:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="comboBox_GF">
+                  <item>
+                   <property name="text">
+                    <string>None</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Linear</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Cubic</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Nearest</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QComboBox" name="comboBox_2_GF">
+                  <item>
+                   <property name="text">
+                    <string>x1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x3</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x5</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QPushButton" name="pushButton_GF">
+                  <property name="styleSheet">
+                   <string notr="true">background-color: #b6d7a8  ;</string>
+                  </property>
+                  <property name="text">
+                   <string>Run Analysis</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QPushButton" name="pushButton_2_GF">
+                  <property name="text">
+                   <string>Export Fitted Results</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="results_edit_GF" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,20">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Global Fit Results:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTextEdit" name="results_edit_GF_2">
+               <property name="styleSheet">
+                <string notr="true">background-color: #ffffff;</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_3" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1">
+          <item>
+           <widget class="QWidget" name="widget_GF" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: #ffffff; 
+</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_2_GF" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: #ffffff; 
+</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_3_GF" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color: #ffffff; 
+</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1813</width>
+     <height>38</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
