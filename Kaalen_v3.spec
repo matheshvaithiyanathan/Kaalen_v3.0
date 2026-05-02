@@ -65,3 +65,9 @@ coll = COLLECT(exe,
                upx=True,
                upx_exclude=[],
                name='Kaalen_v3')
+
+# macOS specific bundle - this is ignored by Windows and Linux builds
+app = BUNDLE(coll,
+             name='Kaalen_v3.app',
+             icon='icon.ico',
+             bundle_identifier=None)
