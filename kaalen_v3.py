@@ -2926,76 +2926,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle('Fusion') 
     app.setStyleSheet("""
-        /* Default text color for the whole app */
-        QWidget { 
-            color: black; 
-        }
-        
-        /* Input boxes */
-        QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
-            background-color: white; 
-            color: black; 
-            border: 1px solid #b0b0b0;
-            padding: 2px;
-        }
-        
-        /* Restore button boundaries and add hover effects */
-        QPushButton { 
-            background-color: #e1e1e1; 
-            color: black; 
-            border: 1px solid #adadad; 
-            border-radius: 4px; 
-            padding: 5px 15px; 
-        }
-        QPushButton:hover { 
-            background-color: #e5f1fb; 
-            border: 1px solid #0078d7; 
-        }
-        QPushButton:pressed { 
-            background-color: #cce4f7; 
-        }
-        
-        /* Fix Matplotlib toolbar controls */
-        QToolBar {
-            background-color: transparent;
-            border: none;
-        }
-        QToolButton {
-            background-color: #e1e1e1;
-            border: 1px solid #adadad;
-            border-radius: 3px;
-            padding: 3px;
-            margin: 2px;
-        }
-        QToolButton:hover {
-            background-color: #e5f1fb;
-            border: 1px solid #0078d7;
-        }
-        
-        /* Fix the tabs */
-        QTabBar::tab { 
-            background-color: #e1e1e1; 
-            color: black; 
-            padding: 6px 12px; 
-            border: 1px solid #adadad; 
-            border-bottom: none;
-            border-top-left-radius: 4px; 
-            border-top-right-radius: 4px; 
-            margin-right: 2px;
-        }
-        QTabBar::tab:selected { 
-            background-color: white; 
-            font-weight: bold;
-        }
-        
-        /* Make the close (X) icon on tabs visible */
-        QTabBar::close-button {
-            background-color: #b0b0b0; 
-            border-radius: 2px;
-        }
-        QTabBar::close-button:hover {
-            background-color: #ff5555; /* Turns red when hovered */
-        }
+        QWidget { color: black; } /* Keeps text white for your green background */
+        QPushButton { color: black; } /* Forces button text to be black so it's visible */
+        QLineEdit, QTextEdit, QComboBox, QSpinBox { background-color: white; color: black; }
     """)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
     window = SignalPlotterApp()
