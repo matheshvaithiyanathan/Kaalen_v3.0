@@ -1,217 +1,109 @@
 name: Build and Package Multi-Platform App
 
-
-
 on:
-
   push:
-
     branches: [ main ]
-
   workflow_dispatch:
 
-
-
 jobs:
-
   # STEP 1: Build raw binaries for Windows, macOS, and Linux
-
   build-binaries:
-
     name: Build Binary (${{ matrix.os }})
-
     runs-on: ${{ matrix.os }}
-
     strategy:
-
       matrix:
-
         os: [windows-latest, macos-14, ubuntu-22.04]
-
     
-
     steps:
-
       - name: Checkout Repository
-
         uses: actions/checkout@v4
-
-
 
       - name: Set up Python
-
         uses: actions/setup-python@v5
-
         with:
-
           python-version: '3.10'
 
-
-
       - name: Install dependencies
-
         run: |
-
           python -m pip install --upgrade pip
-
           pip install pyinstaller==6.2.0 -r requirements.txt
 
-
-
       - name: Build with PyInstaller
-
-        # Note: Linux/macOS use CLI flags because your SPEC file might contain Windows paths
-
+        # Use the spec file for all platforms to ensure UI files are included
         run: |
-
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-
             python -m PyInstaller -y --clean Kaalen_v3.spec
-
           elif [ "${{ matrix.os }}" == "macos-14" ]; then
-
-            python -m PyInstaller --windowed --onefile --name Kaalen-macOS kaalen_v3.py
-
+            python -m PyInstaller -y --clean Kaalen_v3.spec
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-
-            python -m PyInstaller --onefile --name Kaalen-linux kaalen_v3.py
-
+            python -m PyInstaller -y --clean Kaalen_v3.spec
           fi
-
         shell: bash
 
-
-
       - name: Upload Build Artifact
-
         uses: actions/upload-artifact@v4
-
         with:
-
           name: Kaalen-${{ matrix.os }}
-
           path: dist/
-
           retention-days: 1
 
-
-
   # STEP 2: Create the Windows Installer (Runs only AFTER windows binary is built)
-
   create-windows-installer:
-
     name: Compile Windows Installer
-
     needs: build-binaries
-
     runs-on: windows-latest
-
     steps:
-
       - name: Checkout Repository
-
         uses: actions/checkout@v4
-
         
-
       - name: Download Windows Binary
-
         uses: actions/download-artifact@v4
-
         with:
-
           name: Kaalen-windows-latest
-
           path: dist/
 
-
-
       - name: Install Inno Setup
-
         run: choco install innosetup --no-progress
 
-
-
       - name: Compile Installer
-
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
 
-
-
       - name: Upload Installer Artifact
-
         uses: actions/upload-artifact@v4
-
         with:
-
           name: Kaalen-Windows-Setup
-
           path: Output_Installer/Kaalen_v3_windows_Setup.exe
 
-
-
   # STEP 3: Combine everything into one single Release
-
   create-release:
-
     needs: [build-binaries, create-windows-installer]
-
     runs-on: ubuntu-latest
-
     permissions:
-
       contents: write
-
     steps:
-
       - name: Download All Artifacts
-
         uses: actions/download-artifact@v4
-
         with:
-
           path: all-artifacts
 
-
-
       - name: Prepare Release Assets
-
         run: |
-
           mkdir assets
-
-          # Zip Linux and Mac binaries
-
-          cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
-
-          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
-
+          # Zip Linux and Mac binaries (Now outputting as a directory from the .spec file)
+          cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip Kaalen_v3 && cd ../..
+          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip Kaalen_v3 && cd ../..
           # Copy the Windows Installer exe
-
           cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_windows_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
-
-
       - name: Create Release
-
         uses: softprops/action-gh-release@v2
-
         with:
-
           tag_name: v3.0-${{ github.sha }}
-
           name: Kaalen v3.0 Release
-
           files: assets/*
-
           body: |
-
             Standalone Spectroscopy Data Analysis Tool.
-
             - **Windows**: Use Kaalen_v3_Windows_Setup.exe
-
-            - **macOS/Linux**: Use the respective Zip files.
-
+            - **macOS/Linux**: Extract the respective Zip files and run the Kaalen_v3 executable.
         env:
-
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
