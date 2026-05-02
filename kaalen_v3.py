@@ -2926,8 +2926,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle('Fusion') 
     app.setStyleSheet("""
-        QWidget { color: black; }
+        QWidget { color: white; }
         QLineEdit { background-color: white; color: black; }
+        QTextEdit { background-color: white;}
     """)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
     window = SignalPlotterApp()
