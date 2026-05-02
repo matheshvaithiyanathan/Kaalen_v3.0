@@ -5,6 +5,7 @@
 import os
 import sys
 
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -14,7 +15,9 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*sipPyTypeDict.*")
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,6 +34,7 @@ import json
 import ctypes
 
 import pyqtgraph as pg
+
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
@@ -56,6 +60,154 @@ print(f"NumPy Version: {np.__version__}")
 print(f"PyQtGraph Version: {pg.__version__}")
 print(f"Scipy Version: {scipy.__version__}")
 print(f"LMFIT Version: {lmfit.__version__}")
+
+
+# --- SYMLOG HELPER FUNCTIONS ---
+def symlog_transform(data, linthresh=1.0):
+    return np.sign(data) * np.log10(1 + np.abs(data) / linthresh)
+
+
+def inverse_symlog(data, linthresh=1.0):
+    return np.sign(data) * linthresh * (10 ** np.abs(data) - 1)
+
+
+def patch_curve_symlog(curve, x_axis, y_axis):
+    if getattr(curve, '_symlog_patched', False): return
+    curve._symlog_patched = True
+    curve._original_setData = curve.setData
+    curve._raw_x = None
+    curve._raw_y = None
+
+    def new_setData(*args, **kwargs):
+        x = kwargs.get('x', None)
+        y = kwargs.get('y', None)
+
+        if len(args) == 1:
+            if isinstance(args[0], np.ndarray) and args[0].ndim == 2:
+                x = args[0][:, 0]
+                y = args[0][:, 1]
+            else:
+                y = args[0]
+        elif len(args) >= 2:
+            x = args[0]
+            y = args[1]
+
+        if x is not None:
+            curve._raw_x = np.array(x, copy=True)
+        elif curve._raw_x is None:
+            cx, cy = curve.getData()
+            if cx is not None: curve._raw_x = np.array(cx, copy=True)
+
+        if y is not None:
+            curve._raw_y = np.array(y, copy=True)
+        elif curve._raw_y is None:
+            cx, cy = curve.getData()
+            if cy is not None: curve._raw_y = np.array(cy, copy=True)
+
+        plot_x = curve._raw_x
+        plot_y = curve._raw_y
+
+        if plot_x is not None and getattr(x_axis, 'symlog_mode', False):
+            plot_x = symlog_transform(plot_x, x_axis.linthresh)
+        if plot_y is not None and getattr(y_axis, 'symlog_mode', False):
+            plot_y = symlog_transform(plot_y, y_axis.linthresh)
+
+        if plot_x is not None and plot_y is not None:
+            return curve._original_setData(x=plot_x, y=plot_y)
+        elif plot_y is not None:
+            return curve._original_setData(y=plot_y)
+        else:
+            return curve._original_setData(*args, **kwargs)
+
+    curve.setData = new_setData
+
+    def refresh_symlog():
+        if curve._raw_x is not None or curve._raw_y is not None:
+            new_setData(x=curve._raw_x, y=curve._raw_y)
+
+    curve.refresh_symlog = refresh_symlog
+
+
+def add_symlog_to_plot_widget(plot_widget, linthresh=1.0, on_toggle_callback=None):
+    plot_item = plot_widget.getPlotItem()
+    vb = plot_item.getViewBox()
+    x_axis = plot_item.getAxis('bottom')
+    y_axis = plot_item.getAxis('left')
+
+    x_axis.symlog_mode = False
+    x_axis.linthresh = linthresh
+    y_axis.symlog_mode = False
+    y_axis.linthresh = linthresh
+
+    def make_symlog_tickStrings(axis):
+        orig_ticks = axis.tickStrings
+
+        def symlog_tickStrings(values, scale, spacing):
+            if getattr(axis, 'symlog_mode', False):
+                orig_vals = inverse_symlog(np.array(values), axis.linthresh)
+                return [f"{v:.2g}" if abs(v) > 1e-4 else "0" for v in orig_vals]
+            return orig_ticks(values, scale, spacing)
+
+        return symlog_tickStrings
+
+    x_axis.tickStrings = make_symlog_tickStrings(x_axis)
+    y_axis.tickStrings = make_symlog_tickStrings(y_axis)
+
+    if vb.menu is None:
+        vb.getMenu()
+
+    def toggle_symlog_x(checked):
+        x_axis.symlog_mode = checked
+        refresh_all_curves()
+        plot_item.update()
+        if on_toggle_callback: on_toggle_callback()
+
+    def toggle_symlog_y(checked):
+        y_axis.symlog_mode = checked
+        refresh_all_curves()
+        plot_item.update()
+        if on_toggle_callback: on_toggle_callback()
+
+    if vb.menu is not None:
+        symlog_action_x = QAction("SymLog X", vb.menu)
+        symlog_action_x.setCheckable(True)
+        symlog_action_x.triggered.connect(toggle_symlog_x)
+        vb.menu.addAction(symlog_action_x)
+
+        symlog_action_y = QAction("SymLog Y", vb.menu)
+        symlog_action_y.setCheckable(True)
+        symlog_action_y.triggered.connect(toggle_symlog_y)
+        vb.menu.addAction(symlog_action_y)
+
+    orig_plot = plot_item.plot
+
+    def new_plot(*args, **kwargs):
+        curve = orig_plot(*args, **kwargs)
+        patch_curve_symlog(curve, x_axis, y_axis)
+        return curve
+
+    plot_item.plot = new_plot
+
+    orig_addItem = plot_item.addItem
+
+    def new_addItem(item, *args, **kwargs):
+        orig_addItem(item, *args, **kwargs)
+        if isinstance(item, pg.PlotDataItem):
+            patch_curve_symlog(item, x_axis, y_axis)
+
+    plot_item.addItem = new_addItem
+
+    def refresh_all_curves():
+        for item in plot_item.items:
+            if isinstance(item, pg.PlotDataItem) and hasattr(item, 'refresh_symlog'):
+                item.refresh_symlog()
+
+    for item in plot_item.items:
+        if isinstance(item, pg.PlotDataItem):
+            patch_curve_symlog(item, x_axis, y_axis)
+
+
+# --- END SYMLOG HELPER FUNCTIONS ---
 
 
 def find(in_array, target_value):
@@ -1044,6 +1196,7 @@ def multi_exponential(x, *params):
     for i in range(0, len(params) - 1, 2): y += exponential(x, params[i], params[i + 1])
     return y
 
+
 class BaseFitterApp(QMainWindow):
     """
     A base class handling all the UI boilerplate, plot injection, and standard
@@ -1079,6 +1232,15 @@ class BaseFitterApp(QMainWindow):
             (139, 69, 19, 200)  # Brown
         ]
 
+    def _get_true_mouse_coords(self, event_scene_pos):
+        mouse_point = self.plot_widget.plotItem.vb.mapSceneToView(event_scene_pos)
+        x_val, y_val = mouse_point.x(), mouse_point.y()
+        x_axis = self.plot_widget.getPlotItem().getAxis('bottom')
+        y_axis = self.plot_widget.getPlotItem().getAxis('left')
+        if getattr(x_axis, 'symlog_mode', False): x_val = inverse_symlog(x_val, x_axis.linthresh)
+        if getattr(y_axis, 'symlog_mode', False): y_val = inverse_symlog(y_val, y_axis.linthresh)
+        return x_val, y_val
+
     def setup_base_ui(self, plot_widget_to_replace, start_btn, fit_btn, clear_btn, export_btn, text_edit):
         """Standardizes the UI mapping and sets up the PyQtGraph plot."""
         self.start_guess_button = start_btn
@@ -1095,6 +1257,7 @@ class BaseFitterApp(QMainWindow):
         self.plot_widget = pg.PlotWidget(background='w')
         self.plot_widget.setLabel('bottom', self.xlabel)
         self.plot_widget.setLabel('left', self.ylabel)
+        add_symlog_to_plot_widget(self.plot_widget)
         self.legend = self.plot_widget.addLegend()
 
         layout.insertWidget(idx, self.plot_widget)
@@ -1112,19 +1275,26 @@ class BaseFitterApp(QMainWindow):
         self.reset_current_guess()
         self.update_plot()
 
-    def reset_current_guess(self): pass
+    def reset_current_guess(self):
+        pass
 
-    def on_click(self, event): pass
+    def on_click(self, event):
+        pass
 
-    def on_motion(self, event): pass
+    def on_motion(self, event):
+        pass
 
-    def on_fit(self): pass
+    def on_fit(self):
+        pass
 
-    def on_clear_guesses(self): pass
+    def on_clear_guesses(self):
+        pass
 
-    def export_fit_data(self): pass
+    def export_fit_data(self):
+        pass
 
-    def update_plot(self): pass
+    def update_plot(self):
+        pass
 
 
 class ExponentialFitterApp(BaseFitterApp):
@@ -1159,10 +1329,10 @@ class ExponentialFitterApp(BaseFitterApp):
         if not self.is_guessing_mode_active: return
         if event.button() == Qt.MouseButton.LeftButton:
             if self.plot_widget.sceneBoundingRect().contains(event.scenePos()):
-                mouse_point = self.plot_widget.plotItem.vb.mapSceneToView(event.scenePos())
+                x_val, y_val = self._get_true_mouse_coords(event.scenePos())
                 if self.current_component is None:
-                    self.current_component = [mouse_point.y(), 1.0]
-                    self.start_x = mouse_point.x()
+                    self.current_component = [y_val, 1.0]
+                    self.start_x = x_val
                 else:
                     self.fixed_components.append(tuple(self.current_component))
                     self.current_component = None
@@ -1171,8 +1341,8 @@ class ExponentialFitterApp(BaseFitterApp):
     def on_motion(self, event):
         if not self.is_guessing_mode_active or self.current_component is None: return
         if self.plot_widget.sceneBoundingRect().contains(event):
-            mouse_point = self.plot_widget.plotItem.vb.mapSceneToView(event)
-            self.current_component[1] = max(0.01, abs(mouse_point.x() - self.start_x))
+            x_val, y_val = self._get_true_mouse_coords(event)
+            self.current_component[1] = max(0.01, abs(x_val - self.start_x))
             self.update_plot()
 
     def on_fit(self):
@@ -1234,14 +1404,20 @@ class ExponentialFitterApp(BaseFitterApp):
             self.plot_widget.plot(xs, y_guess, pen=pg.mkPen('r', width=2, style=Qt.PenStyle.DashLine), name='Guess')
 
         if self.fitted_params is not None:
-            self.plot_widget.plot(xs, multi_exponential(xs, *self.fitted_params), pen=pg.mkPen('g', width=3), name='Global Fit')
+            self.plot_widget.plot(xs, multi_exponential(xs, *self.fitted_params), pen=pg.mkPen('g', width=3), name='Total Fit')
             offset = self.fitted_params[-1]
             for i in range(0, len(self.fitted_params) - 1, 2):
                 comp_idx = i // 2
                 color = self.component_colors[comp_idx % len(self.component_colors)]
                 self.plot_widget.plot(xs, exponential(xs, *self.fitted_params[i:i + 2]) + offset, pen=pg.mkPen(color, width=2, style=Qt.PenStyle.DashLine), name=f'Comp {comp_idx + 1}')
 
-            offset_line = pg.InfiniteLine(angle=0, pos=offset, pen=pg.mkPen('gray', width=2, style=Qt.PenStyle.DotLine), name='Offset')
+            y_axis = self.plot_widget.getPlotItem().getAxis('left')
+            if getattr(y_axis, 'symlog_mode', False):
+                offset_pos = symlog_transform(offset, y_axis.linthresh)
+            else:
+                offset_pos = offset
+
+            offset_line = pg.InfiniteLine(angle=0, pos=offset_pos, pen=pg.mkPen('gray', width=2, style=Qt.PenStyle.DotLine), name='Offset')
             self.plot_widget.addItem(offset_line)
 
 
@@ -1291,11 +1467,11 @@ class GaussianFitterApp(BaseFitterApp):
         if not self.is_guessing_mode_active: return
         if event.button() == Qt.MouseButton.LeftButton:
             if self.plot_widget.sceneBoundingRect().contains(event.scenePos()):
-                mouse_point = self.plot_widget.plotItem.vb.mapSceneToView(event.scenePos())
+                x_val, y_val = self._get_true_mouse_coords(event.scenePos())
                 if self.amp is None:
-                    self.amp = mouse_point.y()
-                    self.pos = mouse_point.x()
-                    self.start_x = mouse_point.x()
+                    self.amp = y_val
+                    self.pos = x_val
+                    self.start_x = x_val
                     self.fwhm = (self.x_data.max() - self.x_data.min()) / 10 if len(self.x_data) > 0 else 1.0
                 else:
                     self.fixed_peaks.append((self.amp, self.pos, self.fwhm))
@@ -1305,8 +1481,8 @@ class GaussianFitterApp(BaseFitterApp):
     def on_motion(self, event):
         if not self.is_guessing_mode_active or self.amp is None: return
         if self.plot_widget.sceneBoundingRect().contains(event):
-            mouse_point = self.plot_widget.plotItem.vb.mapSceneToView(event)
-            self.fwhm = max(0.001, 2 * abs(mouse_point.x() - self.start_x))
+            x_val, y_val = self._get_true_mouse_coords(event)
+            self.fwhm = max(0.001, 2 * abs(x_val - self.start_x))
             self.update_plot()
 
     def display_fitted_parameters(self):
@@ -1368,7 +1544,7 @@ class GaussianFitterApp(BaseFitterApp):
             self.plot_widget.plot(xs, y_guess, pen=pg.mkPen('r', width=2, style=Qt.PenStyle.DashLine), name='Guess')
 
         if self.fitted_params is not None:
-            self.plot_widget.plot(xs, func(xs, *self.fitted_params), pen=pg.mkPen('g', width=3), name='Global Fit')
+            self.plot_widget.plot(xs, func(xs, *self.fitted_params), pen=pg.mkPen('g', width=3), name='Total Fit')
             for i in range(0, len(self.fitted_params), 3):
                 comp_idx = i // 3
                 color = self.component_colors[comp_idx % len(self.component_colors)]
@@ -1389,6 +1565,7 @@ def exponential_fitter_wrapper(parent, plot_data_item, xlabel, ylabel, slice_axi
     mask = (x_data >= vrange[0][0]) & (x_data <= vrange[0][1])
     if mask.sum() < 2: return None
     return ExponentialFitterApp(parent, x_data[mask], y_data[mask], xlabel, ylabel, slice_axis_name, slice_value, slice_unit, is_spline_corrected)
+
 
 # Auto dispersion correction math
 def auto_find_rough_t0(times, data, method='diff', smooth=2):
@@ -1487,6 +1664,9 @@ class ChirpCorrectionApp(QMainWindow):
     def setup_plots(self):
         self.Slice_along_time_DC.setBackground('w')
         self.Slice_along_time_DC.setLabel('bottom', 'Time')
+
+        add_symlog_to_plot_widget(self.Slice_along_time_DC)
+
         self.slice_curve = self.Slice_along_time_DC.plot(pen=pg.mkPen('b', width=2))
         self.Slice_along_time_DC.scene().sigMouseClicked.connect(self.on_slice_clicked)
 
@@ -1678,7 +1858,11 @@ class ChirpCorrectionApp(QMainWindow):
         pos = event.scenePos()
         if self.Slice_along_time_DC.sceneBoundingRect().contains(pos):
             mouse_point = self.Slice_along_time_DC.plotItem.vb.mapSceneToView(pos)
-            self.manual_points.append({'x': self.wavelengths[self.current_wl_idx], 'y': mouse_point.x()})
+            x_val = mouse_point.x()
+            x_axis = self.Slice_along_time_DC.getPlotItem().getAxis('bottom')
+            if getattr(x_axis, 'symlog_mode', False): x_val = inverse_symlog(x_val, x_axis.linthresh)
+
+            self.manual_points.append({'x': self.wavelengths[self.current_wl_idx], 'y': x_val})
             self.scatter.setData(pos=[(p['x'], p['y']) for p in self.manual_points])
             step = int(self.step_input.text()) if self.step_input.text().isdigit() else 20
             new_idx = self.current_wl_idx + step
@@ -1889,6 +2073,11 @@ class SignalPlotterApp(QMainWindow):
 
         self.map_ui_and_reorganize()
 
+    def _on_contour_symlog_toggled(self):
+        if self.data_loaded:
+            self._update_2d_contour(reset_levels=False)
+            self.update_plots()
+
     def map_ui_and_reorganize(self):
         central_widget = self.centralwidget_MW
         self.tab_widget = QTabWidget()
@@ -1906,7 +2095,7 @@ class SignalPlotterApp(QMainWindow):
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.LeftSide, None)
 
-        #  Read Me Tab 
+        #  Read Me Tab
         self.notes_tab = QWidget()
         notes_layout = QVBoxLayout(self.notes_tab)
 
@@ -1919,7 +2108,7 @@ class SignalPlotterApp(QMainWindow):
         self.notes_font_spinbox.valueChanged.connect(self._change_notes_font_size)
         font_layout.addWidget(font_label)
         font_layout.addWidget(self.notes_font_spinbox)
-        font_layout.addStretch()  
+        font_layout.addStretch()
         notes_layout.addLayout(font_layout)
 
         self.notes_text_edit = QTextEdit()
@@ -1941,8 +2130,15 @@ class SignalPlotterApp(QMainWindow):
         self.setCentralWidget(self.tab_widget)
 
         self.signal_plot_widget = self.controur_MW
+
+        # ADD SYMLOG TO MAIN 2D CONTOUR
+        add_symlog_to_plot_widget(self.signal_plot_widget, on_toggle_callback=self._on_contour_symlog_toggled)
+
         self.x_slice_plot_widget = self.x_slice_plot_MW
         self.y_slice_plot_widget = self.y_slice_plot_MW
+
+        add_symlog_to_plot_widget(self.x_slice_plot_widget)
+        add_symlog_to_plot_widget(self.y_slice_plot_widget)
 
         self.x_slider = self.time_slider_MW
         self.y_slider = self.time_slider_MW_2
@@ -2080,14 +2276,25 @@ class SignalPlotterApp(QMainWindow):
         sorted_y_vals = self.current_y_values[sort_y]
         sorted_z_data = self.current_signal_data[sort_y, :][:, sort_x]
 
-        x_mask = (sorted_x_vals >= x_min) & (sorted_x_vals <= x_max)
-        y_mask = (sorted_y_vals >= y_min) & (sorted_y_vals <= y_max)
+        x_axis = self.signal_plot_widget.getPlotItem().getAxis('bottom')
+        y_axis = self.signal_plot_widget.getPlotItem().getAxis('left')
+
+        plot_x_vals = sorted_x_vals
+        plot_y_vals = sorted_y_vals
+
+        if getattr(x_axis, 'symlog_mode', False):
+            plot_x_vals = symlog_transform(plot_x_vals, x_axis.linthresh)
+        if getattr(y_axis, 'symlog_mode', False):
+            plot_y_vals = symlog_transform(plot_y_vals, y_axis.linthresh)
+
+        x_mask = (plot_x_vals >= x_min) & (plot_x_vals <= x_max)
+        y_mask = (plot_y_vals >= y_min) & (plot_y_vals <= y_max)
 
         if not np.any(x_mask) or not np.any(y_mask):
             return
 
-        sliced_x = sorted_x_vals[x_mask]
-        sliced_y = sorted_y_vals[y_mask]
+        sliced_x = plot_x_vals[x_mask]
+        sliced_y = plot_y_vals[y_mask]
         sliced_z = sorted_z_data[np.ix_(y_mask, x_mask)]
 
         if len(sliced_x) < 10 or len(sliced_y) < 10:
@@ -2143,22 +2350,39 @@ class SignalPlotterApp(QMainWindow):
         if not self.data_loaded: return
         if self.signal_plot_widget.sceneBoundingRect().contains(evt):
             mouse_point = self.signal_plot_widget.getPlotItem().vb.mapSceneToView(evt)
+            x_val, y_val = mouse_point.x(), mouse_point.y()
+            x_axis = self.signal_plot_widget.getPlotItem().getAxis('bottom')
+            y_axis = self.signal_plot_widget.getPlotItem().getAxis('left')
+            if getattr(x_axis, 'symlog_mode', False): x_val = inverse_symlog(x_val, x_axis.linthresh)
+            if getattr(y_axis, 'symlog_mode', False): y_val = inverse_symlog(y_val, y_axis.linthresh)
             if hasattr(self, 'cursor_position_MW'):
-                self.cursor_position_MW.setText(f"X: {mouse_point.x():.2f}, Y: {mouse_point.y():.2f}")
+                self.cursor_position_MW.setText(f"X: {x_val:.2f}, Y: {y_val:.2f}")
 
     def mouse_moved_x_slice(self, evt):
         if not self.data_loaded: return
         if self.x_slice_plot_widget.sceneBoundingRect().contains(evt):
             mouse_point = self.x_slice_plot_widget.getPlotItem().vb.mapSceneToView(evt)
+            x_val, y_val = mouse_point.x(), mouse_point.y()
+            x_axis = self.x_slice_plot_widget.getPlotItem().getAxis('bottom')
+            y_axis = self.x_slice_plot_widget.getPlotItem().getAxis('left')
+            if getattr(x_axis, 'symlog_mode', False): x_val = inverse_symlog(x_val, x_axis.linthresh)
+            if getattr(y_axis, 'symlog_mode', False): y_val = inverse_symlog(y_val, y_axis.linthresh)
+
             if hasattr(self, 'cursor_position_MW'):
-                self.cursor_position_MW.setText(f"X: {mouse_point.x():.2f}, Y: {mouse_point.y():.4g}")
+                self.cursor_position_MW.setText(f"X: {x_val:.2f}, Y: {y_val:.4g}")
 
     def mouse_moved_y_slice(self, evt):
         if not self.data_loaded: return
         if self.y_slice_plot_widget.sceneBoundingRect().contains(evt):
             mouse_point = self.y_slice_plot_widget.getPlotItem().vb.mapSceneToView(evt)
+            x_val, y_val = mouse_point.x(), mouse_point.y()
+            x_axis = self.y_slice_plot_widget.getPlotItem().getAxis('bottom')
+            y_axis = self.y_slice_plot_widget.getPlotItem().getAxis('left')
+            if getattr(x_axis, 'symlog_mode', False): x_val = inverse_symlog(x_val, x_axis.linthresh)
+            if getattr(y_axis, 'symlog_mode', False): y_val = inverse_symlog(y_val, y_axis.linthresh)
+
             if hasattr(self, 'cursor_position_MW'):
-                self.cursor_position_MW.setText(f"X: {mouse_point.x():.2f}, Y: {mouse_point.y():.4g}")
+                self.cursor_position_MW.setText(f"X: {x_val:.2f}, Y: {y_val:.4g}")
 
     def _on_notes_changed(self):
         self._data_modified = True
@@ -2183,7 +2407,7 @@ class SignalPlotterApp(QMainWindow):
     def rename_tab(self, index):
         widget = self.tab_widget.widget(index)
         if widget in (getattr(self, 'main_tab', None), getattr(self, 'notes_tab', None)):
-            return 
+            return
         old_name = self.tab_widget.tabText(index)
         new_name, ok = QInputDialog.getText(self, "Rename Tab", "Enter new tab name:", QLineEdit.EchoMode.Normal, old_name)
         if ok and new_name:
@@ -2474,10 +2698,27 @@ class SignalPlotterApp(QMainWindow):
         sorted_y_vals = self.current_y_values[sort_y]
         sorted_z_data = self.current_signal_data[sort_y, :][:, sort_x]
 
-        self.x_values_interp = np.linspace(sorted_x_vals.min(), sorted_x_vals.max(), 1000)
-        self.y_values_interp = np.linspace(sorted_y_vals.min(), sorted_y_vals.max(), 1000)
-        interp_func = RectBivariateSpline(sorted_y_vals, sorted_x_vals, sorted_z_data)
-        self.signal_data_interp = interp_func(self.y_values_interp, self.x_values_interp)
+        x_axis = self.signal_plot_widget.getPlotItem().getAxis('bottom')
+        y_axis = self.signal_plot_widget.getPlotItem().getAxis('left')
+
+        plot_x_vals = sorted_x_vals
+        plot_y_vals = sorted_y_vals
+
+        if getattr(x_axis, 'symlog_mode', False):
+            plot_x_vals = symlog_transform(plot_x_vals, x_axis.linthresh)
+        if getattr(y_axis, 'symlog_mode', False):
+            plot_y_vals = symlog_transform(plot_y_vals, y_axis.linthresh)
+
+        self.x_values_interp = np.linspace(plot_x_vals.min(), plot_x_vals.max(), 1000)
+        self.y_values_interp = np.linspace(plot_y_vals.min(), plot_y_vals.max(), 1000)
+
+        try:
+            interp_func = RectBivariateSpline(plot_y_vals, plot_x_vals, sorted_z_data)
+            self.signal_data_interp = interp_func(self.y_values_interp, self.x_values_interp)
+        except Exception:
+            self.signal_data_interp = sorted_z_data
+            self.x_values_interp = plot_x_vals
+            self.y_values_interp = plot_y_vals
 
         # Get levels before rendering to prevent float levels crash
         d_min, d_max = np.min(self.current_signal_data), np.max(self.current_signal_data)
@@ -2494,7 +2735,7 @@ class SignalPlotterApp(QMainWindow):
             except ValueError:
                 plot_levels = [d_min, d_max]
 
-        if plot_levels[0] == plot_levels[1]:  
+        if plot_levels[0] == plot_levels[1]:
             plot_levels[1] += 1e-6
 
         self.image_item.setImage(self.signal_data_interp.T, autoLevels=False, levels=plot_levels)
@@ -2541,8 +2782,19 @@ class SignalPlotterApp(QMainWindow):
         self.x_input.setText(f"{self.current_x_values[x_idx]:.2f}")
         self.y_input.setText(f"{self.current_y_values[y_idx]:.2f}")
 
-        self.cursor_x_line.setPos(self.current_x_values[x_idx])
-        self.cursor_y_line.setPos(self.current_y_values[y_idx])
+        cx_val = self.current_x_values[x_idx]
+        cy_val = self.current_y_values[y_idx]
+
+        x_axis = self.signal_plot_widget.getPlotItem().getAxis('bottom')
+        y_axis = self.signal_plot_widget.getPlotItem().getAxis('left')
+
+        if getattr(x_axis, 'symlog_mode', False):
+            cx_val = symlog_transform(cx_val, x_axis.linthresh)
+        if getattr(y_axis, 'symlog_mode', False):
+            cy_val = symlog_transform(cy_val, y_axis.linthresh)
+
+        self.cursor_x_line.setPos(cx_val)
+        self.cursor_y_line.setPos(cy_val)
 
         original_y_slice_x_data = self.current_x_values
         original_y_slice_y_data = self.current_signal_data[y_idx, :]
@@ -2818,7 +3070,7 @@ class SignalPlotterApp(QMainWindow):
                 self.x_slider.setRange(0, len(self.current_x_values) - 1)
                 self.y_slider.setRange(0, len(self.current_y_values) - 1)
 
-                self._update_2d_contour(reset_levels=False) 
+                self._update_2d_contour(reset_levels=False)
                 self.update_plots()
 
             for p in state.get('held_x_plots', []):
@@ -2924,12 +3176,12 @@ if __name__ == '__main__':
             pass
 
     app = QApplication(sys.argv)
-    app.setStyle('Fusion') 
+    app.setStyle('Fusion')
     palette = app.palette()
     palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)  # Text on window/labels
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)        # Text inside input boxes
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)  # Text inside input boxes
     palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)  # Text on buttons
-    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)        # Background for inputs
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)  # Background for inputs
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
     palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
     app.setPalette(palette)
