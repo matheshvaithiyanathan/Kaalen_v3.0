@@ -16,16 +16,14 @@ a = Analysis(
         ('icon.ico', '.'), 
     ],
     hiddenimports=[
-        'matplotlib.backends.backend_qt5agg',
+        'matplotlib.backends.backend_qtagg', # Updated for Qt6
         'scipy.special.orthogonal', 
         'numpy.core._dtype_ctypes',
         'pandas._libs.tslibs.timedeltas',
-        'PyQt5.QtNetwork',
-        'PyQt5.QtPrintSupport',
-        'PyQt5.Qt.plugins.platforms',
-        'PyQt5.Qt.plugins.styles',
-        'PyQt5.QtCore',
-        'PyQt5.QtGui',
+        'PyQt6.QtNetwork',                   # Updated to PyQt6
+        'PyQt6.QtPrintSupport',              # Updated to PyQt6
+        'PyQt6.QtCore',                      # Updated to PyQt6
+        'PyQt6.QtGui',                       # Updated to PyQt6
         'scipy._lib.array_api_compat.numpy',
         'scipy._lib.array_api_compat.numpy.fft',
         'scipy.linalg.cython_blas', 
