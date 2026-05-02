@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1608</width>
+    <height>870</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <widget class="QWidget" name="centralwidget_MW">
+   <property name="styleSheet">
+    <string notr="true">background-color: #fafff5 
+</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>1</number>
+    </property>
+    <property name="topMargin">
+     <number>1</number>
+    </property>
+    <property name="rightMargin">
+     <number>1</number>
+    </property>
+    <property name="bottomMargin">
+     <number>1</number>
+    </property>
+    <item>
+     <widget class="QWidget" name="Mainwindow_MW" native="true">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="4,1">
+       <property name="spacing">
+        <number>1</number>
+       </property>
+       <property name="leftMargin">
+        <number>1</number>
+       </property>
+       <property name="topMargin">
+        <number>1</number>
+       </property>
+       <property name="rightMargin">
+        <number>1</number>
+       </property>
+       <property name="bottomMargin">
+        <number>1</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="Top_MW" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
+          <property name="spacing">
+           <number>1</number>
+          </property>
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>1</number>
+          </property>
+          <property name="rightMargin">
+           <number>1</number>
+          </property>
+          <property name="bottomMargin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="PlotWidget" name="controur_MW" native="true">
+            <property name="styleSheet">
+             <string notr="true">background-color:#ffffff;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="right_plot_MW" native="true">
+            <layout class="QVBoxLayout" name="verticalLayout_3" stretch="5,1,5,1">
+             <property name="spacing">
+              <number>1</number>
+             </property>
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item>
+              <widget class="PlotWidget" name="x_slice_plot_MW" native="true">
+               <property name="styleSheet">
+                <string notr="true">background-color:#ffffff;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="x_slice_plot_buttons_MW" native="true">
+               <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1,1">
+                <item>
+                 <widget class="QPushButton" name="hold_button_xslice_MW">
+                  <property name="text">
+                   <string>Hold</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="clear_button_xslice_MW">
+                  <property name="text">
+                   <string>Clear</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="fit_button_xslice_MW">
+                  <property name="text">
+                   <string>Fit Exponential</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="PlotWidget" name="y_slice_plot_MW" native="true">
+               <property name="styleSheet">
+                <string notr="true">background-color:#ffffff;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="y_slice_plot_buttons_MW" native="true">
+               <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="2,2,1,2,2">
+                <item>
+                 <widget class="QPushButton" name="hold_button_yslice_MW">
+                  <property name="text">
+                   <string>Hold</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="clear_button_yslice_MW">
+                  <property name="text">
+                   <string>Clear</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_MW_2">
+                  <property name="layoutDirection">
+                   <enum>Qt::LeftToRight</enum>
+                  </property>
+                  <property name="text">
+                   <string>Fit Type:</string>
+                  </property>
+                  <property name="textFormat">
+                   <enum>Qt::AutoText</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="comboBox_for_fit_function_MW">
+                  <item>
+                   <property name="text">
+                    <string>Gaussian</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Lorentzian </string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Voigt</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="fit_button_yslice_MW">
+                  <property name="text">
+                   <string>Fit</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="control_widget_MW" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="1,1,1">
+          <property name="spacing">
+           <number>1</number>
+          </property>
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>1</number>
+          </property>
+          <property name="rightMargin">
+           <number>1</number>
+          </property>
+          <property name="bottomMargin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="sliders_widget_MW" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,1,20">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="probe_label_MW">
+               <property name="text">
+                <string>Probe:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="probe_value_MW"/>
+             </item>
+             <item>
+              <widget class="QSlider" name="time_slider_MW">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksAbove</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_2_MW" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="1,1,20">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_MW">
+               <property name="text">
+                <string>Delay time:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="Delay_time_value_MW_2"/>
+             </item>
+             <item>
+              <widget class="QSlider" name="time_slider_MW_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksAbove</enum>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="button_controls_MW" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="5,1">
+             <property name="spacing">
+              <number>1</number>
+             </property>
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item>
+              <widget class="QWidget" name="buttons_holder_MW" native="true">
+               <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,1,1,1,1,1,1">
+                <item>
+                 <widget class="QLabel" name="cursor_position_MW">
+                  <property name="text">
+                   <string>Cursor Position:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QWidget" name="widget_MW" native="true">
+                  <layout class="QGridLayout" name="gridLayout">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="contour_max_MW">
+                     <property name="text">
+                      <string>Contour Max:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="contour_min_MW">
+                     <property name="text">
+                      <string>Contour Min:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="contour_max_lineedit_MW_2"/>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="contour_min_lineedit_MW"/>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_MW">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="dispersion_button_MW">
+                  <property name="text">
+                   <string>Dispersion Correction</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="global_fit_button_MW">
+                  <property name="text">
+                   <string>Global Fit</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="spline_button_MW">
+                  <property name="text">
+                   <string>Spline baseline</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pfid_fit_button_MW">
+                  <property name="text">
+                   <string>PFID Fit</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="interpolate_widget_MW" native="true">
+               <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,1,1">
+                <item>
+                 <widget class="QLabel" name="interpolation_lable_MW">
+                  <property name="text">
+                   <string>Interpolate Probe axis:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="interpolation_style_MW">
+                  <item>
+                   <property name="text">
+                    <string>None</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Linear</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Cubic</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Nearest</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="interpolation_times_MW">
+                  <item>
+                   <property name="text">
+                    <string>x1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x3</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x5</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x10</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1608</width>
+     <height>38</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImport_Data_MW"/>
+    <addaction name="actionExit_MW"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave_Project_MW"/>
+    <addaction name="actionExit_2_MW"/>
+    <addaction name="actionExit_3_MW"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionEdit_Axis_Labels_MW"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionImport_Data_MW">
+   <property name="text">
+    <string>Import Data (Ctrl+I)</string>
+   </property>
+  </action>
+  <action name="actionExit_MW">
+   <property name="text">
+    <string>Load Project (Ctrl+L)</string>
+   </property>
+  </action>
+  <action name="actionSave_Project_MW">
+   <property name="text">
+    <string>Save Project (Ctrl+S)</string>
+   </property>
+  </action>
+  <action name="actionExit_2_MW">
+   <property name="text">
+    <string>Save Project as... (Ctrl+Shift+S)</string>
+   </property>
+  </action>
+  <action name="actionExit_3_MW">
+   <property name="text">
+    <string>Exit (Ctrl+Q)</string>
+   </property>
+  </action>
+  <action name="actionEdit_Axis_Labels_MW">
+   <property name="text">
+    <string>Edit Axis Labels</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
