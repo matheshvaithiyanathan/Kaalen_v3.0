@@ -43,7 +43,7 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QGridLayout, QLabel, QLineEd
                              QMainWindow, QSlider, QDialog, QSplitter, QDialogButtonBox, QInputDialog, QDoubleSpinBox,
                              QMenu, QFileDialog, QComboBox, QTabWidget, QGroupBox, QTabBar)
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform
+from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform, QPalette
 from PyQt6 import uic
 
 # Matplotlib PyQt6 Backend
@@ -2925,11 +2925,12 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setStyle('Fusion') 
-    app.setStyleSheet("""
-        QWidget { color: black; } /* Keeps text white for your green background */
-        QPushButton { color: black; } /* Forces button text to be black so it's visible */
-        QLineEdit, QTextEdit, QComboBox, QSpinBox { background-color: white; color: black; }
-    """)
+    palette = app.palette()
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)  # Text on window/labels
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)        # Text inside input boxes
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)  # Text on buttons
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)        # Background for inputs
+    app.setPalette(palette)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
     window = SignalPlotterApp()
     window.show()
