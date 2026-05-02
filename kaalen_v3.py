@@ -2925,10 +2925,46 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     app.setStyleSheet("""
-        QWidget { color: black; } /* Makes all text black by default */
+        QWidget { 
+            color: black; 
+        }
+        
         QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
             background-color: white; 
             color: black; 
+            border: 1px solid #b0b0b0;
+            padding: 2px;
+        }
+        
+        /* Restore button boundaries and add hover effects */
+        QPushButton { 
+            background-color: #e1e1e1; 
+            color: black; 
+            border: 1px solid #adadad; 
+            border-radius: 4px; 
+            padding: 5px 15px; 
+        }
+        QPushButton:hover { 
+            background-color: #e5f1fb; 
+            border: 1px solid #0078d7; 
+        }
+        QPushButton:pressed { 
+            background-color: #cce4f7; 
+        }
+        
+        QTabBar::tab { 
+            background-color: #e1e1e1; 
+            color: black; 
+            padding: 6px 12px; 
+            border: 1px solid #adadad; 
+            border-bottom: none;
+            border-top-left-radius: 4px; 
+            border-top-right-radius: 4px; 
+            margin-right: 2px;
+        }
+        QTabBar::tab:selected { 
+            background-color: white; 
+            font-weight: bold;
         }
     """)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
