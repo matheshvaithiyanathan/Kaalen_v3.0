@@ -2926,10 +2926,12 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle('Fusion') 
     palette = app.palette()
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.gray)  # Text on window/labels
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)  # Text on window/labels
     palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)        # Text inside input boxes
     palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)  # Text on buttons
     palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)        # Background for inputs
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
     app.setPalette(palette)
     app.setWindowIcon(QIcon(':/icons/icon.ico'))
     window = SignalPlotterApp()
