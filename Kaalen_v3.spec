@@ -44,15 +44,12 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(pyz,
           a.scripts, 
-          a.binaries,
-          a.zipfiles,
-          a.datas,
+          [],                      # Removed a.binaries, a.zipfiles, a.datas from EXE
+          exclude_binaries=True,   # Added to ensure COLLECT handles the files, creating a directory
           name='Kaalen_v3',
           debug=False,
           strip=False,
           upx=True,
-          upx_exclude=[],
-          runtime_tmpdir=None,
           console=False, 
           disable_window_shadow=False,
           target_arch=None,
