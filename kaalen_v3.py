@@ -7,7 +7,6 @@ import sys
 import time
 import ctypes
 
-# Import only the lightweight PyQt6 modules needed for the Splash Screen
 from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
@@ -22,9 +21,6 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-# ==============================================================================
-# 1. INITIALIZE SPLASH SCREEN IMMEDIATELY (Before Heavy Libraries Load)
-# ==============================================================================
 if __name__ == '__main__':
     if sys.platform == 'win32':
         try:
@@ -67,12 +63,8 @@ if __name__ == '__main__':
     )
 
     splash.show()
-    # Forces the UI to render the splash screen immediately
     app.processEvents()
 
-# ==============================================================================
-# 2. PERFORM HEAVY IMPORTS WHILE SPLASH SCREEN IS VISIBLE
-# ==============================================================================
 import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*sipPyTypeDict.*")
@@ -117,9 +109,6 @@ print(f"Scipy Version: {scipy.__version__}")
 print(f"LMFIT Version: {lmfit.__version__}")
 
 
-# ==============================================================================
-# 3. DEFINE LOGIC, FUNCTIONS, AND CLASSES
-# ==============================================================================
 def symlog_transform(data, linthresh=1.0):
     return np.sign(data) * np.log10(1 + np.abs(data) / linthresh)
 
@@ -2485,7 +2474,6 @@ class SignalPlotterApp(QMainWindow):
         z_label_input = QLineEdit(self.global_z_label)
         z_unit_input = QLineEdit(self.global_z_unit)
 
-        # --- NEW CODE: Auto-replace LaTeX syntax with Unicode characters ---
         def auto_replace_latex(line_edit):
             text = line_edit.text()
             replacements = {
@@ -2507,14 +2495,13 @@ class SignalPlotterApp(QMainWindow):
                 line_edit.setText(new_text)
                 line_edit.setCursorPosition(max(0, cursor_pos))
 
-        # Connect the auto-replace function to all the input fields
         x_label_input.textChanged.connect(lambda: auto_replace_latex(x_label_input))
         x_unit_input.textChanged.connect(lambda: auto_replace_latex(x_unit_input))
         y_label_input.textChanged.connect(lambda: auto_replace_latex(y_label_input))
         y_unit_input.textChanged.connect(lambda: auto_replace_latex(y_unit_input))
         z_label_input.textChanged.connect(lambda: auto_replace_latex(z_label_input))
         z_unit_input.textChanged.connect(lambda: auto_replace_latex(z_unit_input))
-        # --- END NEW CODE ---
+
 
         layout.addWidget(QLabel("X-Axis (Probe) Label:"), 0, 0)
         layout.addWidget(x_label_input, 0, 1)
@@ -3236,11 +3223,8 @@ class SignalPlotterApp(QMainWindow):
 
 
 if __name__ == '__main__':
-    # Initialize Main App Window only after heavy imports are done
     window = SignalPlotterApp()
-
-    time.sleep(5)
-
+    time.sleep(3)
     window.show()
 
     if len(sys.argv) > 1:
@@ -3251,7 +3235,5 @@ if __name__ == '__main__':
             except Exception as e:
                 QMessageBox.critical(window, "Error Opening Project", f"Failed to load project from '{file_to_open}': {e}")
 
-    # Safely close the splash screen now that everything is loaded and rendered
     splash.finish(window)
-
     sys.exit(app.exec())
