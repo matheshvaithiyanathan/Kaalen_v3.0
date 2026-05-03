@@ -29,14 +29,21 @@ jobs:
           pip install pyinstaller==6.2.0 -r requirements.txt
 
       - name: Build with PyInstaller
-        # Use the spec file for all platforms to ensure UI files are included
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            # WINDOWS: Use the .spec file to build a directory for Inno Setup
             python -m PyInstaller -y --clean Kaalen_v3.spec
+            
           elif [ "${{ matrix.os }}" == "macos-14" ]; then
-            python -m PyInstaller -y --clean Kaalen_v3.spec
+            # MAC: Build a standalone one-file app bundle
+            python -m PyInstaller kaalen_v3.py --windowed --onefile --distpath dist --name Kaalen_v3 --icon icon.ico
+            
           elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            python -m PyInstaller -y --clean Kaalen_v3.spec
+            # LINUX: Build a standalone one-file executable
+            python -m PyInstaller kaalen_v3.py --onefile --distpath dist --name Kaalen_v3
+            
+            # Make the Linux file executable before uploading
+            chmod +x dist/Kaalen_v3
           fi
         shell: bash
 
@@ -89,9 +96,12 @@ jobs:
       - name: Prepare Release Assets
         run: |
           mkdir assets
-          # Zip Linux and Mac binaries (Now outputting as a directory from the .spec file)
-          cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip Kaalen_v3 && cd ../..
-          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip Kaalen_v3 && cd ../..
+          
+          # Zip Linux and Mac binaries 
+          # Using '.' ensures it zips the single executable or Mac .app bundle directly
+          cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
+          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
+          
           # Copy the Windows Installer exe
           cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_windows_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
