@@ -17,20 +17,34 @@ a = Analysis(
         ('icon.png', '.'),
     ],
     hiddenimports=[
-        'matplotlib.backends.backend_qtagg', # Updated for Qt6
+        # --- The new band-aids for the crash ---
+        'pkg_resources',
+        'jaraco',
+        'jaraco.text',
+        'jaraco.context',
+        'jaraco.functools',
+        'jaraco.classes',
+        'platformdirs',                      
+        'packaging',
+        'appdirs',
+        'importlib_metadata',
+        'more_itertools',
+        
+        # --- Your original app imports (KEEP THESE!) ---
+        'matplotlib.backends.backend_qtagg',
         'scipy.special.orthogonal', 
         'numpy.core._dtype_ctypes',
         'pandas._libs.tslibs.timedeltas',
-        'PyQt6.QtNetwork',                   # Updated to PyQt6
-        'PyQt6.QtPrintSupport',              # Updated to PyQt6
-        'PyQt6.QtCore',                      # Updated to PyQt6
-        'PyQt6.QtGui',                       # Updated to PyQt6
+        'PyQt6.QtNetwork',                   
+        'PyQt6.QtPrintSupport',              
+        'PyQt6.QtCore',                      
+        'PyQt6.QtGui',                       
         'scipy._lib.array_api_compat.numpy',
         'scipy._lib.array_api_compat.numpy.fft',
         'scipy.linalg.cython_blas', 
         'scipy.linalg.cython_lapack',
         'scipy.optimize.minpack',
-    ] + collect_submodules('pkg_resources') + collect_submodules('jaraco'),
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
