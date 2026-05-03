@@ -5,8 +5,13 @@
 import os
 import sys
 import time
-from PyQt6.QtWidgets import QSplashScreen
-from PyQt6.QtGui import QPixmap, QColor, QIcon
+import ctypes
+
+# Import only the lightweight PyQt6 modules needed for the Splash Screen
+from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
+from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
+from PyQt6.QtCore import Qt
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -17,6 +22,57 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
+# ==============================================================================
+# 1. INITIALIZE SPLASH SCREEN IMMEDIATELY (Before Heavy Libraries Load)
+# ==============================================================================
+if __name__ == '__main__':
+    if sys.platform == 'win32':
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
+        except AttributeError:
+            pass
+
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    palette = app.palette()
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
+    app.setPalette(palette)
+
+    app.setWindowIcon(QIcon(resource_path('icon.ico')))
+
+    splash_pixmap = QPixmap(resource_path('icon.png'))
+
+    splash_pixmap = splash_pixmap.scaled(
+        500, 500,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation
+    )
+
+    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
+
+    splash_font = QFont()
+    splash_font.setPointSize(12)
+    splash_font.setBold(True)
+    splash.setFont(splash_font)
+
+    splash.showMessage(
+        "Loading Kaalen v3.0...\nDeveloped by InstrumentsResponse",
+        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
+        QColor("black")
+    )
+
+    splash.show()
+    # Forces the UI to render the splash screen immediately
+    app.processEvents()
+
+# ==============================================================================
+# 2. PERFORM HEAVY IMPORTS WHILE SPLASH SCREEN IS VISIBLE
+# ==============================================================================
 import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*sipPyTypeDict.*")
@@ -32,7 +88,6 @@ from functools import partial
 import scipy
 import re
 import json
-import ctypes
 
 import pyqtgraph as pg
 
@@ -43,12 +98,12 @@ import pandas as pd
 from scipy.interpolate import RectBivariateSpline, UnivariateSpline, interp1d, griddata
 from lmfit.printfuncs import report_fit
 
-from PyQt6.QtWidgets import (QApplication, QWidget, QGridLayout, QLabel, QLineEdit,
-                             QPushButton, QCheckBox, QMessageBox, QVBoxLayout, QHBoxLayout, QTextEdit, QSpinBox,
+from PyQt6.QtWidgets import (QWidget, QGridLayout, QLabel, QLineEdit,
+                             QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QTextEdit, QSpinBox,
                              QMainWindow, QSlider, QDialog, QSplitter, QDialogButtonBox, QInputDialog, QDoubleSpinBox,
                              QMenu, QFileDialog, QComboBox, QTabWidget, QGroupBox, QTabBar)
-from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
-from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform, QPalette
+from PyQt6.QtCore import QThread, pyqtSignal, QTimer
+from PyQt6.QtGui import QDoubleValidator, QIntValidator, QAction, QTransform
 from PyQt6 import uic
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -62,6 +117,9 @@ print(f"Scipy Version: {scipy.__version__}")
 print(f"LMFIT Version: {lmfit.__version__}")
 
 
+# ==============================================================================
+# 3. DEFINE LOGIC, FUNCTIONS, AND CLASSES
+# ==============================================================================
 def symlog_transform(data, linthresh=1.0):
     return np.sign(data) * np.log10(1 + np.abs(data) / linthresh)
 
@@ -204,7 +262,6 @@ def add_symlog_to_plot_widget(plot_widget, linthresh=1.0, on_toggle_callback=Non
     for item in plot_item.items:
         if isinstance(item, pg.PlotDataItem):
             patch_curve_symlog(item, x_axis, y_axis)
-
 
 
 def find(in_array, target_value):
@@ -2428,6 +2485,37 @@ class SignalPlotterApp(QMainWindow):
         z_label_input = QLineEdit(self.global_z_label)
         z_unit_input = QLineEdit(self.global_z_unit)
 
+        # --- NEW CODE: Auto-replace LaTeX syntax with Unicode characters ---
+        def auto_replace_latex(line_edit):
+            text = line_edit.text()
+            replacements = {
+                '\\Delta': 'Δ', '\\mu': 'μ', '\\alpha': 'α', '\\beta': 'β',
+                '\\gamma': 'γ', '\\lambda': 'λ', '\\sigma': 'σ', '\\omega': 'ω',
+                '\\tau': 'τ', '\\pi': 'π', '\\theta': 'θ', '\\circ': '°',
+                '^-1': '⁻¹', '^-2': '⁻²', '^-3': '⁻³', '^0': '⁰',
+                '^1': '¹', '^2': '²', '^3': '³', '^4': '⁴',
+                '_0': '₀', '_1': '₁', '_2': '₂', '_3': '₃', '_4': '₄'
+            }
+            cursor_pos = line_edit.cursorPosition()
+            new_text = text
+            for latex_str, unicode_str in replacements.items():
+                if latex_str in new_text:
+                    new_text = new_text.replace(latex_str, unicode_str)
+                    cursor_pos -= (len(latex_str) - len(unicode_str))
+
+            if text != new_text:
+                line_edit.setText(new_text)
+                line_edit.setCursorPosition(max(0, cursor_pos))
+
+        # Connect the auto-replace function to all the input fields
+        x_label_input.textChanged.connect(lambda: auto_replace_latex(x_label_input))
+        x_unit_input.textChanged.connect(lambda: auto_replace_latex(x_unit_input))
+        y_label_input.textChanged.connect(lambda: auto_replace_latex(y_label_input))
+        y_unit_input.textChanged.connect(lambda: auto_replace_latex(y_unit_input))
+        z_label_input.textChanged.connect(lambda: auto_replace_latex(z_label_input))
+        z_unit_input.textChanged.connect(lambda: auto_replace_latex(z_unit_input))
+        # --- END NEW CODE ---
+
         layout.addWidget(QLabel("X-Axis (Probe) Label:"), 0, 0)
         layout.addWidget(x_label_input, 0, 1)
         layout.addWidget(QLabel("X-Axis Unit:"), 1, 0)
@@ -3148,52 +3236,10 @@ class SignalPlotterApp(QMainWindow):
 
 
 if __name__ == '__main__':
-    if sys.platform == 'win32':
-        try:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
-        except AttributeError:
-            pass
-
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    palette = app.palette()
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
-    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
-    app.setPalette(palette)
-
-    app.setWindowIcon(QIcon(resource_path('icon.ico')))
-
-    splash_pixmap = QPixmap(resource_path('icon.png'))
-
-    splash_pixmap = splash_pixmap.scaled(
-        500, 500,
-        Qt.AspectRatioMode.KeepAspectRatio,
-        Qt.TransformationMode.SmoothTransformation
-    )
-
-    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
-
-    splash_font = QFont()
-    splash_font.setPointSize(12)
-    splash_font.setBold(True)
-    splash.setFont(splash_font)
-
-    splash.showMessage(
-        "Loading Kaalen v3.0...\nDeveloped by InstrumentsResponse",
-        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
-        QColor("black")
-    )
-
-    splash.show()
-    app.processEvents()
-
+    # Initialize Main App Window only after heavy imports are done
     window = SignalPlotterApp()
 
-    time.sleep(3)
+    time.sleep(5)
 
     window.show()
 
@@ -3205,6 +3251,7 @@ if __name__ == '__main__':
             except Exception as e:
                 QMessageBox.critical(window, "Error Opening Project", f"Failed to load project from '{file_to_open}': {e}")
 
+    # Safely close the splash screen now that everything is loaded and rendered
     splash.finish(window)
 
     sys.exit(app.exec())
