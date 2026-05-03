@@ -17,6 +17,9 @@ a = Analysis(
         ('icon.png', '.'),
     ],
     hiddenimports=[
+        'jaraco',                            # <-- ADDED FIX
+        'jaraco.text',                       # <-- ADDED FIX
+        'pkg_resources',
         'matplotlib.backends.backend_qtagg', # Updated for Qt6
         'scipy.special.orthogonal', 
         'numpy.core._dtype_ctypes',
