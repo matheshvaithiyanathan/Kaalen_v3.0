@@ -5,3 +5,4 @@ numpy==2.2.5
 pyqtgraph==0.13.7
 scipy==1.15.3
 lmfit
+jaraco.text
