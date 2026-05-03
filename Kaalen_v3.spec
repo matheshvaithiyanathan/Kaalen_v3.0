@@ -14,6 +14,7 @@ a = Analysis(
         ('dispersion_correction.ui', '.'),
         ('mainwindow.ui', '.'),
         ('icon.ico', '.'), 
+        ('icon.png', '.'),
     ],
     hiddenimports=[
         'matplotlib.backends.backend_qtagg', # Updated for Qt6
