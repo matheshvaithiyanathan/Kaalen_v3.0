@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-
+from PyInstaller.utils.hooks import collect_submodules
 a = Analysis(
     ['kaalen_v3.py'], # <-- UPDATED: Points to your actual Python script
     pathex=['.'], 
@@ -17,9 +17,6 @@ a = Analysis(
         ('icon.png', '.'),
     ],
     hiddenimports=[
-        'jaraco',                            # <-- ADDED FIX
-        'jaraco.text',                       # <-- ADDED FIX
-        'pkg_resources',
         'matplotlib.backends.backend_qtagg', # Updated for Qt6
         'scipy.special.orthogonal', 
         'numpy.core._dtype_ctypes',
@@ -33,7 +30,7 @@ a = Analysis(
         'scipy.linalg.cython_blas', 
         'scipy.linalg.cython_lapack',
         'scipy.optimize.minpack',
-    ],
+    ] + collect_submodules('pkg_resources') + collect_submodules('jaraco'),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
