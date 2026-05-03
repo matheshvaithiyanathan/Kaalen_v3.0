@@ -29,21 +29,14 @@ jobs:
           pip install pyinstaller==6.2.0 -r requirements.txt
 
       - name: Build with PyInstaller
+        # We use the .spec file for ALL OSes to enforce a "onedir" (folder) build.
+        # This guarantees the hiddenimports fix is applied to Windows, Mac, and Linux.
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            # WINDOWS: Use the .spec file to build a directory for Inno Setup
-            python -m PyInstaller -y --clean Kaalen_v3.spec
-            
-          elif [ "${{ matrix.os }}" == "macos-14" ]; then
-            # MAC: Build a standalone one-file app bundle
-            python -m PyInstaller kaalen_v3.py --windowed --onefile --distpath dist --name Kaalen_v3 --icon icon.ico
-            
-          elif [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
-            # LINUX: Build a standalone one-file executable
-            python -m PyInstaller kaalen_v3.py --onefile --distpath dist --name Kaalen_v3
-            
-            # Make the Linux file executable before uploading
-            chmod +x dist/Kaalen_v3
+          python -m PyInstaller -y --clean Kaalen_v3.spec
+          
+          # For Linux, grant execution permissions to the generated binary inside the folder
+          if [ "${{ matrix.os }}" == "ubuntu-22.04" ]; then
+            chmod +x dist/Kaalen_v3/Kaalen_v3
           fi
         shell: bash
 
@@ -73,6 +66,7 @@ jobs:
         run: choco install innosetup --no-progress
 
       - name: Compile Installer
+        # This compiles the installer using the folder outputted by the Windows build step
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "Kaalen_v3_Installer.iss"'
 
       - name: Upload Installer Artifact
@@ -97,12 +91,12 @@ jobs:
         run: |
           mkdir assets
           
-          # Zip Linux and Mac binaries 
-          # Using '.' ensures it zips the single executable or Mac .app bundle directly
+          # Zip the contents of the Mac and Linux artifact folders 
+          # We use '.' to grab everything inside the downloaded artifact directory
           cd all-artifacts/Kaalen-macos-14 && zip -r ../../assets/Kaalen-v3-macOS.zip . && cd ../..
-          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip . && cd ../..
+          cd all-artifacts/Kaalen-ubuntu-22.04 && zip -r ../../assets/Kaalen-v3-Linux.zip Kaalen_v3 && cd ../..
           
-          # Copy the Windows Installer exe
+          # Copy the compiled Windows Setup.exe
           cp all-artifacts/Kaalen-Windows-Setup/Kaalen_v3_windows_Setup.exe assets/Kaalen_v3_Windows_Setup.exe
 
       - name: Create Release
@@ -113,7 +107,9 @@ jobs:
           files: assets/*
           body: |
             Standalone Spectroscopy Data Analysis Tool.
-            - **Windows**: Use Kaalen_v3_Windows_Setup.exe
-            - **macOS/Linux**: Extract the respective Zip files and run the Kaalen_v3 executable.
+            
+            - **Windows**: Download and run `Kaalen_v3_Windows_Setup.exe` to install the software to your Start Menu.
+            - **Linux**: Download and extract `Kaalen-v3-Linux.zip`. Open the `Kaalen_v3` folder in your terminal and run `./Kaalen_v3`.
+            - **macOS**: Download and extract `Kaalen-v3-macOS.zip` and run the executable.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
