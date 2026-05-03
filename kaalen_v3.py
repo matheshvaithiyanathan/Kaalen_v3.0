@@ -4,12 +4,13 @@
 
 import os
 import sys
-
+import time
+from PyQt6.QtWidgets import QSplashScreen
+from PyQt6.QtGui import QPixmap, QColor, QIcon
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
@@ -50,7 +51,6 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform, QPalette
 from PyQt6 import uic
 
-# Matplotlib PyQt6 Backend
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
@@ -62,7 +62,6 @@ print(f"Scipy Version: {scipy.__version__}")
 print(f"LMFIT Version: {lmfit.__version__}")
 
 
-# --- SYMLOG HELPER FUNCTIONS ---
 def symlog_transform(data, linthresh=1.0):
     return np.sign(data) * np.log10(1 + np.abs(data) / linthresh)
 
@@ -206,8 +205,6 @@ def add_symlog_to_plot_widget(plot_widget, linthresh=1.0, on_toggle_callback=Non
         if isinstance(item, pg.PlotDataItem):
             patch_curve_symlog(item, x_axis, y_axis)
 
-
-# --- END SYMLOG HELPER FUNCTIONS ---
 
 
 def find(in_array, target_value):
@@ -614,7 +611,6 @@ class PFIDFitterApp(QMainWindow):
         self.probe_max_input = self.lineEdit_4_PD
         self.num_components_input = self.lineEdit_6_PD
 
-        # Dynamic label mappings
         self.time_min_label = getattr(self, 'label_2_PD', None)
         self.time_max_label = getattr(self, 'label_3_PD', None)
         self.probe_min_label = getattr(self, 'label_4_PD', None)
@@ -624,7 +620,6 @@ class PFIDFitterApp(QMainWindow):
         self.nu10_guess_input = self.lineEdit_8_PD
         self.nu21_guess_input = self.lineEdit_9_PD
 
-        # Fallback handling for "r" guess input
         self.r_guess_input = getattr(self, 'lineEdit_10_PD', getattr(self, 'lineEdit_10', None))
 
         self.interp_method_combo = self.comboBox_PD
@@ -1198,10 +1193,6 @@ def multi_exponential(x, *params):
 
 
 class BaseFitterApp(QMainWindow):
-    """
-    A base class handling all the UI boilerplate, plot injection, and standard
-    button connections for the various 1D fitting modules.
-    """
 
     def __init__(self, parent=None, x_data=None, y_data=None, xlabel="X-axis", ylabel="Y-axis", title_prefix="Fitter", slice_axis_name="", slice_value=None, slice_unit=""):
         super().__init__(parent)
@@ -1221,15 +1212,14 @@ class BaseFitterApp(QMainWindow):
         self.setWindowTitle(title)
         self.setObjectName(title)
 
-        # Colors for individual fit components
         self.component_colors = [
-            (255, 0, 0, 200),  # Red
-            (0, 0, 255, 200),  # Blue
-            (255, 165, 0, 200),  # Orange
-            (128, 0, 128, 200),  # Purple
-            (0, 200, 200, 200),  # Cyan
-            (255, 20, 147, 200),  # Pink
-            (139, 69, 19, 200)  # Brown
+            (255, 0, 0, 200),
+            (0, 0, 255, 200),
+            (255, 165, 0, 200),
+            (128, 0, 128, 200),
+            (0, 200, 200, 200),
+            (255, 20, 147, 200),
+            (139, 69, 19, 200)
         ]
 
     def _get_true_mouse_coords(self, event_scene_pos):
@@ -1242,7 +1232,6 @@ class BaseFitterApp(QMainWindow):
         return x_val, y_val
 
     def setup_base_ui(self, plot_widget_to_replace, start_btn, fit_btn, clear_btn, export_btn, text_edit):
-        """Standardizes the UI mapping and sets up the PyQtGraph plot."""
         self.start_guess_button = start_btn
         self.fit_button = fit_btn
         self.clear_button = clear_btn
@@ -1567,7 +1556,6 @@ def exponential_fitter_wrapper(parent, plot_data_item, xlabel, ylabel, slice_axi
     return ExponentialFitterApp(parent, x_data[mask], y_data[mask], xlabel, ylabel, slice_axis_name, slice_value, slice_unit, is_spline_corrected)
 
 
-# Auto dispersion correction math
 def auto_find_rough_t0(times, data, method='diff', smooth=2):
     """Finds a rough time-zero for every wavelength column."""
     clean_data = np.nan_to_num(data, nan=0.0)
@@ -2061,7 +2049,6 @@ class SignalPlotterApp(QMainWindow):
 
         self.active_fitter_tabs = []
 
-        # Centralized UI Labels and Units. Can be changed in the Edit names if needed during analyss
         self.global_x_label = 'Probe wavenumber'
         self.global_x_unit = 'cm\u207B\u00B9'
         self.global_y_label = 'Time'
@@ -2095,11 +2082,9 @@ class SignalPlotterApp(QMainWindow):
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.LeftSide, None)
 
-        #  Read Me Tab
         self.notes_tab = QWidget()
         notes_layout = QVBoxLayout(self.notes_tab)
 
-        # Font size controls
         font_layout = QHBoxLayout()
         font_label = QLabel("Font Size:")
         self.notes_font_spinbox = QSpinBox()
@@ -2131,7 +2116,6 @@ class SignalPlotterApp(QMainWindow):
 
         self.signal_plot_widget = self.controur_MW
 
-        # ADD SYMLOG TO MAIN 2D CONTOUR
         add_symlog_to_plot_widget(self.signal_plot_widget, on_toggle_callback=self._on_contour_symlog_toggled)
 
         self.x_slice_plot_widget = self.x_slice_plot_MW
@@ -2247,7 +2231,6 @@ class SignalPlotterApp(QMainWindow):
         self.signal_plot_widget.getViewBox().sigRangeChanged.connect(self.on_view_changed)
 
     def _enforce_tab_pinning(self, from_index, to_index):
-        """Prevents the Main Plots and Read Me tabs from being moved from their pinned positions (0 and 1)."""
         self.tab_widget.tabBar().blockSignals(True)
         main_idx = self.tab_widget.indexOf(self.main_tab)
         if main_idx != 0 and main_idx != -1:
@@ -2323,7 +2306,6 @@ class SignalPlotterApp(QMainWindow):
             print(f"Dynamic zoom interpolation failed: {e}")
 
     def _get_ui_state(self, widget):
-        """Recursively scrapes the exact state of all inputs inside a given QWidget."""
         ui_state = {}
         for child in widget.findChildren(QLineEdit):
             ui_state[child.objectName()] = child.text()
@@ -2336,7 +2318,6 @@ class SignalPlotterApp(QMainWindow):
         return ui_state
 
     def _set_ui_state(self, widget, ui_state):
-        """Injects saved values back into all inputs inside a given QWidget."""
         for child in widget.findChildren(QLineEdit):
             if child.objectName() in ui_state: child.setText(ui_state[child.objectName()])
         for child in widget.findChildren(QCheckBox):
@@ -2720,7 +2701,6 @@ class SignalPlotterApp(QMainWindow):
             self.x_values_interp = plot_x_vals
             self.y_values_interp = plot_y_vals
 
-        # Get levels before rendering to prevent float levels crash
         d_min, d_max = np.min(self.current_signal_data), np.max(self.current_signal_data)
 
         if reset_levels:
@@ -3052,7 +3032,6 @@ class SignalPlotterApp(QMainWindow):
                     self._set_ui_state(self.centralwidget_MW, state['main_ui_state'])
 
                 if 'notes_text' in state and hasattr(self, 'notes_text_edit'):
-                    # Block signals briefly so loading notes doesn't trigger the "Unsaved changes" flag
                     self.notes_text_edit.blockSignals(True)
                     self.notes_text_edit.setPlainText(state.get('notes_text', ""))
                     self.notes_text_edit.blockSignals(False)
@@ -3178,15 +3157,44 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
     palette = app.palette()
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)  # Text on window/labels
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)  # Text inside input boxes
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)  # Text on buttons
-    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)  # Background for inputs
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
     palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
     palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
     app.setPalette(palette)
-    app.setWindowIcon(QIcon(':/icons/icon.ico'))
+
+    app.setWindowIcon(QIcon(resource_path('icon.ico')))
+
+    splash_pixmap = QPixmap(resource_path('icon.png'))
+
+    splash_pixmap = splash_pixmap.scaled(
+        500, 500,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation
+    )
+
+    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
+
+    splash_font = QFont()
+    splash_font.setPointSize(12)
+    splash_font.setBold(True)
+    splash.setFont(splash_font)
+
+    splash.showMessage(
+        "Loading Kaalen v3.0...\nDeveloped by InstrumentsResponse",
+        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
+        QColor("black")
+    )
+
+    splash.show()
+    app.processEvents()
+
     window = SignalPlotterApp()
+
+    time.sleep(3)
+
     window.show()
 
     if len(sys.argv) > 1:
@@ -3196,5 +3204,7 @@ if __name__ == '__main__':
                 window._load_project_from_path(file_to_open)
             except Exception as e:
                 QMessageBox.critical(window, "Error Opening Project", f"Failed to load project from '{file_to_open}': {e}")
+
+    splash.finish(window)
 
     sys.exit(app.exec())
