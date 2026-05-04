@@ -6,11 +6,10 @@ import os
 import sys
 import time
 import ctypes
-
 from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
-
+print('Software Developed by InstrumentsResponse. Contact instrumentsresponse.com for details and updates.'
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -102,11 +101,11 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 
-print(f"Pandas Version: {pd.__version__}")
-print(f"NumPy Version: {np.__version__}")
-print(f"PyQtGraph Version: {pg.__version__}")
-print(f"Scipy Version: {scipy.__version__}")
-print(f"LMFIT Version: {lmfit.__version__}")
+#print(f"Pandas Version: {pd.__version__}")
+#print(f"NumPy Version: {np.__version__}")
+#print(f"PyQtGraph Version: {pg.__version__}")
+#print(f"Scipy Version: {scipy.__version__}")
+#print(f"LMFIT Version: {lmfit.__version__}")
 
 
 def symlog_transform(data, linthresh=1.0):
