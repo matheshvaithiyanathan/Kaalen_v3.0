@@ -9,7 +9,7 @@ import ctypes
 from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
-print('Software Developed by InstrumentsResponse. Contact instrumentsresponse.com for details and updates.'
+print('Loading Kaalen v3.... \n Developed by InstrumentsResponse. \n Contact instrumentsresponse.com for details and updates.')
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
