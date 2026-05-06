@@ -24,6 +24,7 @@ Kaalen is a intuitive desktop application for visualizing and analyzing **Time-r
 
 * **Global Fitting**: Perform multi-exponential global analysis on your entire 2D dataset.
 * **Global Fitting with Coherent Artifacts**: Perform multi-exponential global analysis on your entire 2D dataset including functions for coherent artifact.
+
 ![Description of the image](Artifact_fit.png)
 ---
 * **Automated Guesses**: Use **Singular Value Decomposition (SVD)** to automatically generate initial guesses for decay constants ($τ$).
