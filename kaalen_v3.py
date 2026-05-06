@@ -1,10 +1,13 @@
 # Copyright (c) [2026] [Mathesh Vaithiyanathan]
 # This software is licensed under the MIT License.
 # See the LICENSE file for details.
-
 import os
 import sys
-
+import time
+import ctypes
+from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
+from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
+from PyQt6.QtCore import Qt
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -13,6 +16,50 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
+if __name__ == '__main__':
+    if sys.platform == 'win32':
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
+        except AttributeError:
+            pass
+
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    palette = app.palette()
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
+    app.setPalette(palette)
+
+    app.setWindowIcon(QIcon(resource_path('icon.ico')))
+
+    splash_pixmap = QPixmap(resource_path('icon.png'))
+
+    splash_pixmap = splash_pixmap.scaled(
+        500, 500,
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation
+    )
+
+    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
+
+    splash_font = QFont()
+    splash_font.setPointSize(12)
+    splash_font.setBold(True)
+    splash.setFont(splash_font)
+
+    splash.showMessage(
+        "Loading Kaalen v3.0...\nDeveloped by InstrumentsResponse",
+        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
+        QColor("black")
+    )
+
+    splash.show()
+    app.processEvents()
 
 
 import warnings
@@ -49,6 +96,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
 from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform, QPalette
 from PyQt6 import uic
 
+# Matplotlib PyQt6 Backend
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
@@ -203,6 +251,10 @@ def add_symlog_to_plot_widget(plot_widget, linthresh=1.0, on_toggle_callback=Non
         if isinstance(item, pg.PlotDataItem):
             patch_curve_symlog(item, x_axis, y_axis)
 
+
+# --- END SYMLOG HELPER FUNCTIONS ---
+
+
 def find(in_array, target_value):
     array = in_array
     nearest_index = np.abs(array - target_value).argmin()
@@ -228,6 +280,8 @@ def convolved_exponential_analytical(time, tau, t0, delta):
     return model
 
 
+# --- MATHEMATICAL FUNCTIONS FOR LUIS PAPER FIT ---
+
 def luis_G(t, d):
     return (1 / np.sqrt(2 * np.pi * d ** 2)) * np.exp(-0.5 * (t / d) ** 2)
 
@@ -245,10 +299,13 @@ def luis_CS(t, d):
 
 
 def luis_CExp(t, d, k):
+    # Mathematically stable formulation avoiding 0.0 * inf (NaN) for large positive t
     x = (d ** 2 * k - t) / (np.sqrt(2) * d)
 
+    # Case for x >= 0
     term_pos = 0.5 * np.exp(-0.5 * (t / d) ** 2) * erfcx(np.clip(x, 0, np.inf))
 
+    # Case for x < 0 (Uses the identity erfc(x) = 2 - erfc(-x) to prevent erfcx from returning inf)
     exp_arg = np.clip(0.5 * (d * k) ** 2 - k * t, -np.inf, 700)
     term_neg = np.exp(exp_arg) - 0.5 * np.exp(-0.5 * (t / d) ** 2) * erfcx(np.clip(-x, 0, np.inf))
 
@@ -645,7 +702,7 @@ class LuisFitWorker(QThread):
             return (model - data).ravel()
 
         params = lmfit.Parameters()
-        params.add('t0', value=0.0, min=-5.0, max=5.0)  
+        params.add('t0', value=0.0, min=-5.0, max=5.0)  # Add floating time zero
         params.add('d', value=d_guess, min=0.001, max=10.0)
         for i, tau_val in enumerate(tau_guesses):
             params.add(f'tau_{i}', value=tau_val, min=0.001, max=100000.0)
@@ -2285,7 +2342,7 @@ class ArtifactGlobalFitApp(QMainWindow):
 
         self.d_input.setText("0.028")
         self.tau_guesses_input.setText("0.11, 1.27, 8.33, 2.0, 20.0")
-        self.probes_input.setText("1970, 2015, 1950, 1940")
+        self.probes_input.setText("420, 530, 640")
 
     def update_axis_labels(self, x_label, x_unit, y_label, y_unit, z_label, z_unit):
         self.x_axis_label = x_label
@@ -2533,6 +2590,7 @@ class SignalPlotterApp(QMainWindow):
 
         self.signal_plot_widget = self.controur_MW
 
+        # ADD SYMLOG TO MAIN 2D CONTOUR
         add_symlog_to_plot_widget(self.signal_plot_widget, on_toggle_callback=self._on_contour_symlog_toggled)
 
         self.x_slice_plot_widget = self.x_slice_plot_MW
@@ -2570,6 +2628,7 @@ class SignalPlotterApp(QMainWindow):
         self.pfid_fit_button = self.pfid_fit_button_MW
         self.spline_baseline_button = self.spline_button_MW
 
+        # Inject Artifact Global Fit Button into the same layout block
         parent_layout = self.global_fit_button.parentWidget().layout()
         if parent_layout:
             self.artifact_fit_button_MW = QPushButton("Artifact included Global fit")
@@ -3621,23 +3680,8 @@ class SignalPlotterApp(QMainWindow):
 
 
 if __name__ == '__main__':
-    if sys.platform == 'win32':
-        try:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
-        except AttributeError:
-            pass
-
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    palette = app.palette()
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
-    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
-    app.setPalette(palette)
     window = SignalPlotterApp()
+    time.sleep(3)
     window.show()
 
     if len(sys.argv) > 1:
@@ -3646,6 +3690,7 @@ if __name__ == '__main__':
             try:
                 window._load_project_from_path(file_to_open)
             except Exception as e:
-                print(f"Error loading file from command line: {e}")
+                QMessageBox.critical(window, "Error Opening Project", f"Failed to load project from '{file_to_open}': {e}")
 
+    splash.finish(window)
     sys.exit(app.exec())
