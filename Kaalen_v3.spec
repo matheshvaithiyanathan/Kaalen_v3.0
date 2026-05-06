@@ -13,6 +13,7 @@ a = Analysis(
         ('peak_fit_UI.ui', '.'),
         ('dispersion_correction.ui', '.'),
         ('mainwindow.ui', '.'),
+        ('coherent_artifact_included_GF.ui', '.'),
         ('icon.ico', '.'), 
         ('icon.png', '.'),
     ],
