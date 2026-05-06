@@ -4,12 +4,7 @@
 
 import os
 import sys
-import time
-import ctypes
-from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
-from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
-from PyQt6.QtCore import Qt
-print('Loading Kaalen v3.... \n Developed by InstrumentsResponse. \n Contact instrumentsresponse.com for details and updates.')
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -20,50 +15,6 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-if __name__ == '__main__':
-    if sys.platform == 'win32':
-        try:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
-        except AttributeError:
-            pass
-
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    palette = app.palette()
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
-    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
-    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
-    app.setPalette(palette)
-
-    app.setWindowIcon(QIcon(resource_path('icon.ico')))
-
-    splash_pixmap = QPixmap(resource_path('icon.png'))
-
-    splash_pixmap = splash_pixmap.scaled(
-        500, 500,
-        Qt.AspectRatioMode.KeepAspectRatio,
-        Qt.TransformationMode.SmoothTransformation
-    )
-
-    splash = QSplashScreen(splash_pixmap, Qt.WindowType.WindowStaysOnTopHint)
-
-    splash_font = QFont()
-    splash_font.setPointSize(12)
-    splash_font.setBold(True)
-    splash.setFont(splash_font)
-
-    splash.showMessage(
-        "Loading Kaalen v3.0...\nDeveloped by InstrumentsResponse",
-        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
-        QColor("black")
-    )
-
-    splash.show()
-    app.processEvents()
-
 import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*sipPyTypeDict.*")
@@ -73,12 +24,13 @@ from matplotlib.colors import TwoSlopeNorm
 import lmfit
 from scipy.linalg import lstsq
 from scipy.optimize import curve_fit, least_squares
-from scipy.special import erf, voigt_profile
+from scipy.special import erf, voigt_profile, erfc, erfcx
 from scipy.ndimage import gaussian_filter
 from functools import partial
 import scipy
 import re
 import json
+import ctypes
 
 import pyqtgraph as pg
 
@@ -89,23 +41,23 @@ import pandas as pd
 from scipy.interpolate import RectBivariateSpline, UnivariateSpline, interp1d, griddata
 from lmfit.printfuncs import report_fit
 
-from PyQt6.QtWidgets import (QWidget, QGridLayout, QLabel, QLineEdit,
-                             QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, QTextEdit, QSpinBox,
+from PyQt6.QtWidgets import (QApplication, QWidget, QGridLayout, QLabel, QLineEdit,
+                             QPushButton, QCheckBox, QMessageBox, QVBoxLayout, QHBoxLayout, QTextEdit, QSpinBox,
                              QMainWindow, QSlider, QDialog, QSplitter, QDialogButtonBox, QInputDialog, QDoubleSpinBox,
-                             QMenu, QFileDialog, QComboBox, QTabWidget, QGroupBox, QTabBar)
-from PyQt6.QtCore import QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QDoubleValidator, QIntValidator, QAction, QTransform
+                             QMenu, QFileDialog, QComboBox, QTabWidget, QGroupBox, QTabBar, QFormLayout)
+from PyQt6.QtCore import QThread, pyqtSignal, Qt, QTimer
+from PyQt6.QtGui import QFont, QColor, QDoubleValidator, QIntValidator, QIcon, QAction, QTransform, QPalette
 from PyQt6 import uic
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 
-#print(f"Pandas Version: {pd.__version__}")
-#print(f"NumPy Version: {np.__version__}")
-#print(f"PyQtGraph Version: {pg.__version__}")
-#print(f"Scipy Version: {scipy.__version__}")
-#print(f"LMFIT Version: {lmfit.__version__}")
+print(f"Pandas Version: {pd.__version__}")
+print(f"NumPy Version: {np.__version__}")
+print(f"PyQtGraph Version: {pg.__version__}")
+print(f"Scipy Version: {scipy.__version__}")
+print(f"LMFIT Version: {lmfit.__version__}")
 
 
 def symlog_transform(data, linthresh=1.0):
@@ -251,7 +203,6 @@ def add_symlog_to_plot_widget(plot_widget, linthresh=1.0, on_toggle_callback=Non
         if isinstance(item, pg.PlotDataItem):
             patch_curve_symlog(item, x_axis, y_axis)
 
-
 def find(in_array, target_value):
     array = in_array
     nearest_index = np.abs(array - target_value).argmin()
@@ -276,6 +227,35 @@ def convolved_exponential_analytical(time, tau, t0, delta):
 
     return model
 
+
+def luis_G(t, d):
+    return (1 / np.sqrt(2 * np.pi * d ** 2)) * np.exp(-0.5 * (t / d) ** 2)
+
+
+def luis_G_prime(t, d):
+    return -(t / d ** 2) * luis_G(t, d)
+
+
+def luis_G_double_prime(t, d):
+    return ((t ** 2 / d ** 4) - (1 / d ** 2)) * luis_G(t, d)
+
+
+def luis_CS(t, d):
+    return 0.5 * erfc(-t / (np.sqrt(2) * d))
+
+
+def luis_CExp(t, d, k):
+    x = (d ** 2 * k - t) / (np.sqrt(2) * d)
+
+    term_pos = 0.5 * np.exp(-0.5 * (t / d) ** 2) * erfcx(np.clip(x, 0, np.inf))
+
+    exp_arg = np.clip(0.5 * (d * k) ** 2 - k * t, -np.inf, 700)
+    term_neg = np.exp(exp_arg) - 0.5 * np.exp(-0.5 * (t / d) ** 2) * erfcx(np.clip(-x, 0, np.inf))
+
+    return np.where(x >= 0, term_pos, term_neg)
+
+
+# -------------------------------------------------
 
 def _format_unit_for_display(unit_string):
     unit_string = unit_string.replace("^-1", "\u207B\u00B9")
@@ -602,6 +582,101 @@ class PFIDFitWorker(QThread):
         return (best_fit, A_final, r_squared, ω_new, T_new, data_interp, fit_report_string, result, num_components)
 
 
+class LuisFitWorker(QThread):
+    finished = pyqtSignal(object)
+    error = pyqtSignal(str)
+
+    def __init__(self, params):
+        super().__init__()
+        self.params = params
+
+    def run(self):
+        try:
+            results = self.run_luis_fit_analysis(**self.params)
+            self.finished.emit(results)
+        except Exception as e:
+            self.error.emit(str(e))
+
+    def build_luis_design_matrix(self, time, t0, d, k_vals):
+        t_shifted = time - t0
+        G = luis_G(t_shifted, d)
+        Gp = luis_G_prime(t_shifted, d)
+        Gdp = luis_G_double_prime(t_shifted, d)
+        CS = luis_CS(t_shifted, d)
+        cols = [G, Gp, Gdp, CS]
+        for k in k_vals:
+            cols.append(luis_CExp(t_shifted, d, k))
+        return np.stack(cols, axis=1)
+
+    def run_luis_fit_analysis(self, time_min, time_max, probe_min, probe_max,
+                              d_guess, tau_guesses, probes_to_plot,
+                              x_axis, y_axis, two_d_spectrum):
+        if x_axis is None or y_axis is None or two_d_spectrum is None:
+            self.error.emit("Data not provided to the analysis worker.")
+            return
+
+        try:
+            time_min_idx = find(y_axis, time_min)
+            time_max_idx = find(y_axis, time_max)
+            probe_min_idx = find(x_axis, probe_min)
+            probe_max_idx = find(x_axis, probe_max)
+
+            t_start, t_end = min(time_min_idx, time_max_idx), max(time_min_idx, time_max_idx)
+            p_start, p_end = min(probe_min_idx, probe_max_idx), max(probe_min_idx, probe_max_idx)
+
+            data_sliced = two_d_spectrum[t_start:t_end + 1, p_start:p_end + 1]
+            time_sliced = y_axis[t_start:t_end + 1]
+            probe_sliced = x_axis[p_start:p_end + 1]
+
+            if data_sliced.size == 0:
+                raise IndexError("Sliced data is empty. Check min/max bounds.")
+        except IndexError as e:
+            self.error.emit(f"Error: Bounding issue. {str(e)}")
+            return
+
+        def objective_function(params, time, data):
+            t0 = params['t0'].value
+            d = params['d'].value
+            tau_vals = [params[f'tau_{i}'].value for i in range(len(tau_guesses))]
+            k_vals = [1.0 / t if t != 0 else 1e6 for t in tau_vals]
+            A = self.build_luis_design_matrix(time, t0, d, k_vals)
+            amplitudes, _, _, _ = lstsq(A, data)
+            model = A @ amplitudes
+            return (model - data).ravel()
+
+        params = lmfit.Parameters()
+        params.add('t0', value=0.0, min=-5.0, max=5.0)  
+        params.add('d', value=d_guess, min=0.001, max=10.0)
+        for i, tau_val in enumerate(tau_guesses):
+            params.add(f'tau_{i}', value=tau_val, min=0.001, max=100000.0)
+
+        minimizer = lmfit.Minimizer(objective_function, params, fcn_args=(time_sliced, data_sliced))
+        result = minimizer.minimize(method='leastsq')
+
+        ss_res = np.sum(result.residual ** 2)
+        ss_tot = np.sum((data_sliced - np.mean(data_sliced)) ** 2)
+        r_squared = 1 - (ss_res / ss_tot)
+
+        best_t0 = result.params['t0'].value
+        best_d = result.params['d'].value
+        best_taus = [result.params[f'tau_{i}'].value for i in range(len(tau_guesses))]
+        best_ks = [1.0 / t if t != 0 else 1e6 for t in best_taus]
+
+        A_final = lstsq(self.build_luis_design_matrix(time_sliced, best_t0, best_d, best_ks), data_sliced)[0]
+        best_fit = (self.build_luis_design_matrix(time_sliced, best_t0, best_d, best_ks) @ A_final)
+
+        import io
+        old_stdout = sys.stdout
+        sys.stdout = buffer = io.StringIO()
+        try:
+            report_fit(result)
+            fit_report_string = buffer.getvalue()
+        finally:
+            sys.stdout = old_stdout
+
+        return (best_fit, A_final, best_t0, best_d, best_taus, r_squared, probe_sliced, time_sliced, data_sliced, probes_to_plot, fit_report_string)
+
+
 class PFIDFitterApp(QMainWindow):
     def __init__(self, main_window, x_axis_label='Probe wavenumber', y_axis_label='Time', z_axis_label='ΔOD', x_axis_unit='cm\u207B\u00B9',
                  y_axis_unit='ps', z_axis_unit='mOD', font_size=12):
@@ -656,6 +731,7 @@ class PFIDFitterApp(QMainWindow):
         self.probe_max_input = self.lineEdit_4_PD
         self.num_components_input = self.lineEdit_6_PD
 
+        # Dynamic label mappings
         self.time_min_label = getattr(self, 'label_2_PD', None)
         self.time_max_label = getattr(self, 'label_3_PD', None)
         self.probe_min_label = getattr(self, 'label_4_PD', None)
@@ -665,6 +741,7 @@ class PFIDFitterApp(QMainWindow):
         self.nu10_guess_input = self.lineEdit_8_PD
         self.nu21_guess_input = self.lineEdit_9_PD
 
+        # Fallback handling for "r" guess input
         self.r_guess_input = getattr(self, 'lineEdit_10_PD', getattr(self, 'lineEdit_10', None))
 
         self.interp_method_combo = self.comboBox_PD
@@ -927,10 +1004,10 @@ class GlobalFitApp(QMainWindow):
     def update_axis_labels(self, x_label, x_unit, y_label, y_unit, z_label, z_unit):
         self.x_axis_label = x_label
         self.x_axis_unit = x_unit
-        self.y_axis_label = y_label
-        self.y_axis_unit = y_unit
-        self.z_axis_label = z_label
-        self.z_axis_unit = z_unit
+        self.y_label_unit = y_unit
+        self.y_label_label = y_label
+        self.z_label_label = z_label
+        self.z_label_unit = z_unit
 
         if hasattr(self, 'time_min_label') and self.time_min_label:
             self.time_min_label.setText(f"{y_label} min ({y_unit}):")
@@ -1132,8 +1209,8 @@ class GlobalFitApp(QMainWindow):
 
         plt.rcParams.update({'font.size': self.font_size})
         formatted_x_unit = _format_unit_for_display(self.x_axis_unit)
-        formatted_y_unit = _format_unit_for_display(self.y_axis_unit)
-        formatted_z_unit = _format_unit_for_display(self.z_axis_unit)
+        formatted_y_unit = _format_unit_for_display(self.y_label_unit)
+        formatted_z_unit = _format_unit_for_display(self.z_label_unit)
 
         fig1 = Figure(figsize=(6, 6), dpi=100)
         canvas1 = FigureCanvas(fig1)
@@ -1142,7 +1219,7 @@ class GlobalFitApp(QMainWindow):
         ax1.contourf(probe, time, best_fit, cmap='seismic', norm=norm, levels=100)
         ax1.set_title(f'Fitted data' if use_convolved_model else 'Fit data')
         ax1.set_xlabel(f'{self.x_axis_label} ({formatted_x_unit})')
-        ax1.set_ylabel(f'{self.y_axis_label} ({formatted_y_unit})')
+        ax1.set_ylabel(f'{self.y_label_label} ({formatted_y_unit})')
         fig1.tight_layout();
         ax1.minorticks_on()
         self.plot1_vbox.addWidget(NavigationToolbar(canvas1, self.widget_GF));
@@ -1160,16 +1237,16 @@ class GlobalFitApp(QMainWindow):
 
         for i in range(A_final.shape[0]):
             interp_probe, interp_A = self._get_interpolated_1d_data(probe, A_final[i, :], method, multiplier)
-            ax2.plot(interp_probe, interp_A, linewidth=2, label=f'τ = {best_taus[i]:.2f} {formatted_y_unit}')
+            ax2.plot(interp_probe, interp_A, linewidth=2, label=f'τ = {best_taus[i]:.2g} {formatted_y_unit}')
 
         ax2.set_title('DAS spectra')
         ax2.set_xlabel(f'{self.x_axis_label} ({formatted_x_unit})')
-        ax2.set_ylabel(f'{self.z_axis_label} ({formatted_z_unit})')
-        ax2.legend();
-        ax2.grid(True);
-        fig2.tight_layout();
+        ax2.set_ylabel(f'{self.z_label_label} ({formatted_z_unit})')
+        ax2.legend()
+        ax2.grid(True)
+        fig2.tight_layout()
         ax2.minorticks_on()
-        self.plot2_vbox.addWidget(NavigationToolbar(canvas2, self.widget_2_GF));
+        self.plot2_vbox.addWidget(NavigationToolbar(canvas2, self.widget_2_GF))
         self.plot2_vbox.addWidget(canvas2)
 
         fig3 = Figure(figsize=(6, 6), dpi=100)
@@ -1180,18 +1257,41 @@ class GlobalFitApp(QMainWindow):
             ax3.plot(time, data_sliced[:, idx], '-', linewidth=2, label=f'{p_val} {formatted_x_unit}')
             ax3.plot(time, best_fit[:, idx], '-', linewidth=1, color='k')
         ax3.set_title('Time Traces with Fits')
-        ax3.set_xlabel(f'{self.y_axis_label} ({formatted_y_unit})')
-        ax3.set_ylabel(f'{self.z_axis_label} ({formatted_z_unit})')
-        ax3.legend();
-        ax3.grid(True);
-        fig3.tight_layout();
+        ax3.set_xlabel(f'{self.y_label_label} ({formatted_y_unit})')
+        ax3.set_ylabel(f'{self.z_label_label} ({formatted_z_unit})')
+        ax3.legend()
+        ax3.grid(True)
+        fig3.tight_layout()
         ax3.minorticks_on()
-        self.plot3_vbox.addWidget(NavigationToolbar(canvas3, self.widget_3_GF));
+        self.plot3_vbox.addWidget(NavigationToolbar(canvas3, self.widget_3_GF))
         self.plot3_vbox.addWidget(canvas3)
 
     def handle_error(self, message):
         self.run_button.setDisabled(False)
         QMessageBox.critical(self, "Analysis Error", message)
+
+    def export_fit_results(self):
+        if getattr(self, 'best_fit_data', None) is None:
+            QMessageBox.warning(self, "No Data", "Please run the global fit analysis before exporting.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Artifact Global Fit Data", "", "CSV Files (*.csv)")
+        if not file_path: return
+        dir_name = os.path.dirname(file_path)
+        base_name = os.path.basename(file_path).split('.')[0]
+
+        try:
+            pd.DataFrame(self.A_final_data.T, index=self.probe_data, columns=self.labels).to_csv(os.path.join(dir_name, f"{base_name}_DAS.csv"))
+            pd.DataFrame(self.best_fit_data, index=self.time_data, columns=self.probe_data).to_csv(os.path.join(dir_name, f"{base_name}_2D_fitted_data.csv"))
+            traces_df = pd.DataFrame({"Time": self.time_data})
+            for p_val in self.probes_to_plot_data:
+                idx = find(self.probe_data, p_val)
+                traces_df[f"Trace at {p_val}"] = self.data_sliced_for_export[:, idx]
+                traces_df[f"{p_val} (Fit)"] = self.best_fit_data[:, idx]
+            traces_df.to_csv(os.path.join(dir_name, f"{base_name}_time_traces.csv"), index=False)
+            QMessageBox.information(self, "Export Successful", f"Results exported to:\n{dir_name}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Error: {e}")
 
 
 def multi_gaussian(x, *params):
@@ -1238,11 +1338,15 @@ def multi_exponential(x, *params):
 
 
 class BaseFitterApp(QMainWindow):
+    """
+    A base class handling all the UI boilerplate, plot injection, and standard
+    button connections for the various 1D fitting modules.
+    """
 
     def __init__(self, parent=None, x_data=None, y_data=None, xlabel="X-axis", ylabel="Y-axis", title_prefix="Fitter", slice_axis_name="", slice_value=None, slice_unit=""):
         super().__init__(parent)
-        self.x_data = x_data if x_data is not None else np.array([])
-        self.y_data = y_data if y_data is not None else np.array([])
+        self.x_data = np.array(x_data) if x_data is not None else np.array([])
+        self.y_data = np.array(y_data) if y_data is not None else np.array([])
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.slice_axis_name = slice_axis_name
@@ -1257,14 +1361,15 @@ class BaseFitterApp(QMainWindow):
         self.setWindowTitle(title)
         self.setObjectName(title)
 
+        # Colors for individual fit components
         self.component_colors = [
-            (255, 0, 0, 200),
-            (0, 0, 255, 200),
-            (255, 165, 0, 200),
-            (128, 0, 128, 200),
-            (0, 200, 200, 200),
-            (255, 20, 147, 200),
-            (139, 69, 19, 200)
+            (255, 0, 0, 200),  # Red
+            (0, 0, 255, 200),  # Blue
+            (255, 165, 0, 200),  # Orange
+            (128, 0, 128, 200),  # Purple
+            (0, 200, 200, 200),  # Cyan
+            (255, 20, 147, 200),  # Pink
+            (139, 69, 19, 200)  # Brown
         ]
 
     def _get_true_mouse_coords(self, event_scene_pos):
@@ -1277,6 +1382,7 @@ class BaseFitterApp(QMainWindow):
         return x_val, y_val
 
     def setup_base_ui(self, plot_widget_to_replace, start_btn, fit_btn, clear_btn, export_btn, text_edit):
+        """Standardizes the UI mapping and sets up the PyQtGraph plot."""
         self.start_guess_button = start_btn
         self.fit_button = fit_btn
         self.clear_button = clear_btn
@@ -1601,6 +1707,7 @@ def exponential_fitter_wrapper(parent, plot_data_item, xlabel, ylabel, slice_axi
     return ExponentialFitterApp(parent, x_data[mask], y_data[mask], xlabel, ylabel, slice_axis_name, slice_value, slice_unit, is_spline_corrected)
 
 
+# Auto dispersion correction math
 def auto_find_rough_t0(times, data, method='diff', smooth=2):
     """Finds a rough time-zero for every wavelength column."""
     clean_data = np.nan_to_num(data, nan=0.0)
@@ -2069,6 +2176,268 @@ class ChirpCorrectionApp(QMainWindow):
         self.update_start_index()
 
 
+class ArtifactGlobalFitApp(QMainWindow):
+    def __init__(self, x_axis_data=None, y_axis_data=None, two_d_spectrum_data=None, parent=None,
+                 x_axis_label='Probe wavenumber', y_axis_label='Time', z_axis_label='ΔOD',
+                 x_axis_unit='cm\u207B\u00B9', y_axis_unit='ps', z_axis_unit='mOD', font_size=12):
+        super().__init__(parent)
+        uic.loadUi(resource_path('coherent_artifact_included_GF.ui'), self)
+
+        self.setWindowTitle("Artifact included Global Fit")
+        self.setObjectName("Artifact included Global Fit")
+
+        self.x_axis_data = x_axis_data
+        self.y_axis_data = y_axis_data
+        self.two_d_spectrum_data = two_d_spectrum_data
+        self.x_axis_label = x_axis_label
+        self.y_axis_label = y_axis_label
+        self.z_axis_label = z_axis_label
+        self.x_axis_unit = x_axis_unit
+        self.y_axis_unit = y_axis_unit
+        self.z_axis_unit = z_axis_unit
+        self.font_size = font_size
+        self.worker_thread = None
+        self.last_results = None
+
+        self.map_ui()
+        self.update_axis_labels(self.x_axis_label, self.x_axis_unit, self.y_axis_label, self.y_axis_unit, self.z_axis_label, self.z_axis_unit)
+
+    def _get_interpolated_1d_data(self, original_x, original_y, method, multiplier):
+        if method == "None" or len(original_x) < 2:
+            return np.copy(original_x), np.copy(original_y)
+        try:
+            target_n_points = int(len(original_x) * multiplier)
+            if target_n_points < 2:
+                target_n_points = 2
+            x_interp = np.linspace(original_x.min(), original_x.max(), target_n_points)
+            f_interp = interp1d(original_x, original_y, kind=method.lower(), fill_value="extrapolate")
+            y_interp = f_interp(x_interp)
+            return x_interp, y_interp
+        except Exception as e:
+            return np.copy(original_x), np.copy(original_y)
+
+    def _replot_das(self):
+        if not hasattr(self, 'last_results') or not self.last_results:
+            return
+        self.plot_results(self.last_results)
+
+    def map_ui(self):
+        self.time_min_input = getattr(self, 'time_min_CA', getattr(self, 'lineEdit_CA', None))
+        self.time_max_input = getattr(self, 'time_max_CA', getattr(self, 'lineEdit_2_CA', None))
+        self.probe_min_input = getattr(self, 'probe_min_CA', getattr(self, 'lineEdit_3_CA', None))
+        self.probe_max_input = getattr(self, 'probe_max_CA', getattr(self, 'lineEdit_4_CA', None))
+        self.tau_guesses_input = getattr(self, 'Tau_initial_guesses_CA', getattr(self, 'lineEdit_5_CA', None))
+        self.d_input = getattr(self, 'pulse_initial_guess_CA', getattr(self, 'lineEdit_6_CA', None))
+        self.probes_input = self.lineEdit_7_CA
+
+        self.das_interp_method_combo = getattr(self, 'comboBox_CA', None)
+        self.das_interp_multiplier_combo = getattr(self, 'comboBox_2_CA', None)
+
+        self.run_button = self.pushButton_CA
+        self.export_button = self.pushButton_2_CA
+        self.results_text_edit = self.textEdit_CA
+
+        self.run_button.clicked.connect(self.run_analysis)
+        self.export_button.clicked.connect(self.export_fit_results)
+        self.export_button.setDisabled(True)
+
+        if self.das_interp_method_combo:
+            self.das_interp_method_combo.currentIndexChanged.connect(self._replot_das)
+        if self.das_interp_multiplier_combo:
+            self.das_interp_multiplier_combo.currentIndexChanged.connect(self._replot_das)
+
+        layout_plots = self.widget_3_CA.layout()
+
+        idx1 = layout_plots.indexOf(self.widget_6_CA)
+        layout_plots.removeWidget(self.widget_6_CA)
+        self.widget_6_CA.deleteLater()
+        self.plot1_widget = QWidget()
+        self.plot1_vbox = QVBoxLayout(self.plot1_widget)
+        layout_plots.insertWidget(idx1, self.plot1_widget)
+
+        idx2 = layout_plots.indexOf(self.widget_7_CA)
+        layout_plots.removeWidget(self.widget_7_CA)
+        self.widget_7_CA.deleteLater()
+        self.plot2_widget = QWidget()
+        self.plot2_vbox = QVBoxLayout(self.plot2_widget)
+        layout_plots.insertWidget(idx2, self.plot2_widget)
+
+        idx3 = layout_plots.indexOf(self.widget_8)
+        layout_plots.removeWidget(self.widget_8)
+        self.widget_8.deleteLater()
+        self.plot3_widget = QWidget()
+        self.plot3_vbox = QVBoxLayout(self.plot3_widget)
+        layout_plots.insertWidget(idx3, self.plot3_widget)
+
+        if self.x_axis_data is not None and len(self.x_axis_data) > 0:
+            self.probe_min_input.setText(f"{np.min(self.x_axis_data):.2f}")
+            self.probe_max_input.setText(f"{np.max(self.x_axis_data):.2f}")
+        else:
+            self.probe_min_input.setText("1900")
+            self.probe_max_input.setText("2100")
+
+        if self.y_axis_data is not None and len(self.y_axis_data) > 0:
+            self.time_min_input.setText(f"{np.min(self.y_axis_data):.2f}")
+            self.time_max_input.setText(f"{np.max(self.y_axis_data):.2f}")
+        else:
+            self.time_min_input.setText("1.0")
+            self.time_max_input.setText("80.0")
+
+        self.d_input.setText("0.028")
+        self.tau_guesses_input.setText("0.11, 1.27, 8.33, 2.0, 20.0")
+        self.probes_input.setText("1970, 2015, 1950, 1940")
+
+    def update_axis_labels(self, x_label, x_unit, y_label, y_unit, z_label, z_unit):
+        self.x_axis_label = x_label
+        self.x_axis_unit = x_unit
+        self.y_axis_label = y_label
+        self.y_axis_unit = y_unit
+        self.z_axis_label = z_label
+        self.z_axis_unit = z_unit
+        if self.last_results is not None:
+            self.plot_results(self.last_results)
+
+    def run_analysis(self):
+        try:
+            tau_guesses = [float(t.strip()) for t in self.tau_guesses_input.text().split(',') if t.strip()]
+            params = {
+                "time_min": float(self.time_min_input.text()),
+                "time_max": float(self.time_max_input.text()),
+                "probe_min": float(self.probe_min_input.text()),
+                "probe_max": float(self.probe_max_input.text()),
+                "d_guess": float(self.d_input.text().strip()),
+                "tau_guesses": tau_guesses,
+                "probes_to_plot": [float(p.strip()) for p in self.probes_input.text().split(',') if p.strip()],
+                "x_axis": self.x_axis_data, "y_axis": self.y_axis_data, "two_d_spectrum": self.two_d_spectrum_data
+            }
+            self.results_text_edit.clear()
+            self.run_button.setDisabled(True)
+            self.worker_thread = LuisFitWorker(params)
+            self.worker_thread.finished.connect(self.plot_results)
+            self.worker_thread.error.connect(self.handle_error)
+            self.worker_thread.start()
+        except Exception as e:
+            QMessageBox.critical(self, "Input Error", f"Check inputs. Error: {e}")
+            self.run_button.setDisabled(False)
+
+    def plot_results(self, results):
+        self.run_button.setDisabled(False)
+        if not results: return
+        self.last_results = results
+        (best_fit, A_final, best_t0, best_d, best_taus, r_squared, probe, time, data_sliced, probes_to_plot, fit_report_string) = results
+
+        self.best_fit_data = best_fit
+        self.A_final_data = A_final
+        self.probe_data = probe
+        self.time_data = time
+        self.data_sliced_for_export = data_sliced
+        self.probes_to_plot_data = probes_to_plot
+        self.export_button.setEnabled(True)
+
+        formatted_y_unit = _format_unit_for_display(self.y_axis_unit)
+        self.labels = ["G(t)", "G'(t)", "G''(t)", "CS(t)"]
+        for tau in best_taus:
+            self.labels.append(f"τ = {tau:.3g} {formatted_y_unit}")
+
+        output_text = f"--- Artifact included Global Fit Results ---\n\nOverall R-squared: {r_squared:.4f}\nBest t0: {best_t0:.4g}\nBest d: {best_d:.4g}\nBest τ values ({formatted_y_unit}): {[f'{t:.3g}' for t in best_taus]}\n\n--- Full lmfit Report ---\n{fit_report_string}"
+        self.results_text_edit.setText(output_text)
+
+        def clear_layout(layout):
+            while layout.count():
+                child = layout.takeAt(0)
+                if child.widget(): child.widget().deleteLater()
+
+        clear_layout(self.plot1_vbox)
+        clear_layout(self.plot2_vbox)
+        clear_layout(self.plot3_vbox)
+
+        plt.rcParams.update({'font.size': self.font_size})
+        formatted_x_unit = _format_unit_for_display(self.x_axis_unit)
+        formatted_y_unit = _format_unit_for_display(self.y_axis_unit)
+        formatted_z_unit = _format_unit_for_display(self.z_axis_unit)
+
+        fig1 = Figure(figsize=(6, 6), dpi=100)
+        canvas1 = FigureCanvas(fig1)
+        ax1 = fig1.add_subplot(111)
+        norm = TwoSlopeNorm(vmin=best_fit.min(), vcenter=0, vmax=best_fit.max())
+        ax1.contourf(probe, time, best_fit, cmap='seismic', norm=norm, levels=100)
+        ax1.set_title('Fitted data (Artifact Model)')
+        ax1.set_xlabel(f'{self.x_axis_label} ({formatted_x_unit})')
+        ax1.set_ylabel(f'{self.y_axis_label} ({formatted_y_unit})')
+        fig1.tight_layout()
+        ax1.minorticks_on()
+        self.plot1_vbox.addWidget(NavigationToolbar(canvas1, self.plot1_widget))
+        self.plot1_vbox.addWidget(canvas1)
+
+        fig2 = Figure(figsize=(6, 6), dpi=100)
+        canvas2 = FigureCanvas(fig2)
+        ax2 = fig2.add_subplot(111)
+
+        method = self.das_interp_method_combo.currentText() if self.das_interp_method_combo else "None"
+        try:
+            multiplier = int(self.das_interp_multiplier_combo.currentText().replace('x', '')) if self.das_interp_multiplier_combo else 1
+        except ValueError:
+            multiplier = 1
+
+        for i in range(4, A_final.shape[0]):
+            interp_probe, interp_A = self._get_interpolated_1d_data(probe, A_final[i, :], method, multiplier)
+            ax2.plot(interp_probe, interp_A, linewidth=2, label=self.labels[i])
+
+        ax2.set_title('DAS spectra (Basis Amplitudes)')
+        ax2.set_xlabel(f'{self.x_axis_label} ({formatted_x_unit})')
+        ax2.set_ylabel(f'{self.z_axis_label} ({formatted_z_unit})')
+        ax2.legend()
+        ax2.grid(True)
+        fig2.tight_layout()
+        ax2.minorticks_on()
+        self.plot2_vbox.addWidget(NavigationToolbar(canvas2, self.plot2_widget))
+        self.plot2_vbox.addWidget(canvas2)
+
+        fig3 = Figure(figsize=(6, 6), dpi=100)
+        canvas3 = FigureCanvas(fig3)
+        ax3 = fig3.add_subplot(111)
+        for p_val in probes_to_plot:
+            idx = find(probe, p_val)
+            ax3.plot(time, data_sliced[:, idx], '-', linewidth=2, label=f'{p_val} {formatted_x_unit}')
+            ax3.plot(time, best_fit[:, idx], '-', linewidth=1, color='k')
+        ax3.set_title('Time Traces with Fits')
+        ax3.set_xlabel(f'{self.y_axis_label} ({formatted_y_unit})')
+        ax3.set_ylabel(f'{self.z_axis_label} ({formatted_z_unit})')
+        ax3.legend()
+        ax3.grid(True)
+        fig3.tight_layout()
+        ax3.minorticks_on()
+        self.plot3_vbox.addWidget(NavigationToolbar(canvas3, self.plot3_widget))
+        self.plot3_vbox.addWidget(canvas3)
+
+    def handle_error(self, message):
+        self.run_button.setDisabled(False)
+        QMessageBox.critical(self, "Analysis Error", message)
+
+    def export_fit_results(self):
+        if getattr(self, 'best_fit_data', None) is None:
+            QMessageBox.warning(self, "No Data", "Please run the global fit analysis before exporting.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save Artifact Global Fit Data", "", "CSV Files (*.csv)")
+        if not file_path: return
+        dir_name = os.path.dirname(file_path)
+        base_name = os.path.basename(file_path).split('.')[0]
+
+        try:
+            pd.DataFrame(self.A_final_data.T, index=self.probe_data, columns=self.labels).to_csv(os.path.join(dir_name, f"{base_name}_DAS.csv"))
+            pd.DataFrame(self.best_fit_data, index=self.time_data, columns=self.probe_data).to_csv(os.path.join(dir_name, f"{base_name}_2D_fitted_data.csv"))
+            traces_df = pd.DataFrame({"Time": self.time_data})
+            for p_val in self.probes_to_plot_data:
+                idx = find(self.probe_data, p_val)
+                traces_df[f"Trace at {p_val}"] = self.data_sliced_for_export[:, idx]
+                traces_df[f"{p_val} (Fit)"] = self.best_fit_data[:, idx]
+            traces_df.to_csv(os.path.join(dir_name, f"{base_name}_time_traces.csv"), index=False)
+            QMessageBox.information(self, "Export Successful", f"Results exported to:\n{dir_name}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", f"Error: {e}")
+
+
 class SignalPlotterApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -2094,6 +2463,7 @@ class SignalPlotterApp(QMainWindow):
 
         self.active_fitter_tabs = []
 
+        # Centralized UI Labels and Units. Can be changed in the Edit names if needed during analyss
         self.global_x_label = 'Probe wavenumber'
         self.global_x_unit = 'cm\u207B\u00B9'
         self.global_y_label = 'Time'
@@ -2127,9 +2497,11 @@ class SignalPlotterApp(QMainWindow):
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.RightSide, None)
         self.tab_widget.tabBar().setTabButton(0, QTabBar.ButtonPosition.LeftSide, None)
 
+        #  Read Me Tab
         self.notes_tab = QWidget()
         notes_layout = QVBoxLayout(self.notes_tab)
 
+        # Font size controls
         font_layout = QHBoxLayout()
         font_label = QLabel("Font Size:")
         self.notes_font_spinbox = QSpinBox()
@@ -2197,6 +2569,16 @@ class SignalPlotterApp(QMainWindow):
         self.global_fit_button = self.global_fit_button_MW
         self.pfid_fit_button = self.pfid_fit_button_MW
         self.spline_baseline_button = self.spline_button_MW
+
+        parent_layout = self.global_fit_button.parentWidget().layout()
+        if parent_layout:
+            self.artifact_fit_button_MW = QPushButton("Artifact included Global fit")
+            idx = parent_layout.indexOf(self.global_fit_button)
+            if idx != -1:
+                parent_layout.insertWidget(idx + 1, self.artifact_fit_button_MW)
+            else:
+                parent_layout.addWidget(self.artifact_fit_button_MW)
+            self.artifact_fit_button_MW.clicked.connect(self._launch_artifact_fit_tab)
 
         self.y_fit_function_selector = self.comboBox_for_fit_function_MW
         if self.y_fit_function_selector.findText("Voigt") == -1:
@@ -2276,6 +2658,7 @@ class SignalPlotterApp(QMainWindow):
         self.signal_plot_widget.getViewBox().sigRangeChanged.connect(self.on_view_changed)
 
     def _enforce_tab_pinning(self, from_index, to_index):
+        """Prevents the Main Plots and Read Me tabs from being moved from their pinned positions (0 and 1)."""
         self.tab_widget.tabBar().blockSignals(True)
         main_idx = self.tab_widget.indexOf(self.main_tab)
         if main_idx != 0 and main_idx != -1:
@@ -2351,6 +2734,7 @@ class SignalPlotterApp(QMainWindow):
             print(f"Dynamic zoom interpolation failed: {e}")
 
     def _get_ui_state(self, widget):
+        """Recursively scrapes the exact state of all inputs inside a given QWidget."""
         ui_state = {}
         for child in widget.findChildren(QLineEdit):
             ui_state[child.objectName()] = child.text()
@@ -2363,6 +2747,7 @@ class SignalPlotterApp(QMainWindow):
         return ui_state
 
     def _set_ui_state(self, widget, ui_state):
+        """Injects saved values back into all inputs inside a given QWidget."""
         for child in widget.findChildren(QLineEdit):
             if child.objectName() in ui_state: child.setText(ui_state[child.objectName()])
         for child in widget.findChildren(QCheckBox):
@@ -2472,35 +2857,6 @@ class SignalPlotterApp(QMainWindow):
         y_unit_input = QLineEdit(self.global_y_unit)
         z_label_input = QLineEdit(self.global_z_label)
         z_unit_input = QLineEdit(self.global_z_unit)
-
-        def auto_replace_latex(line_edit):
-            text = line_edit.text()
-            replacements = {
-                '\\Delta': 'Δ', '\\mu': 'μ', '\\alpha': 'α', '\\beta': 'β',
-                '\\gamma': 'γ', '\\lambda': 'λ', '\\sigma': 'σ', '\\omega': 'ω',
-                '\\tau': 'τ', '\\pi': 'π', '\\theta': 'θ', '\\circ': '°',
-                '^-1': '⁻¹', '^-2': '⁻²', '^-3': '⁻³', '^0': '⁰',
-                '^1': '¹', '^2': '²', '^3': '³', '^4': '⁴',
-                '_0': '₀', '_1': '₁', '_2': '₂', '_3': '₃', '_4': '₄'
-            }
-            cursor_pos = line_edit.cursorPosition()
-            new_text = text
-            for latex_str, unicode_str in replacements.items():
-                if latex_str in new_text:
-                    new_text = new_text.replace(latex_str, unicode_str)
-                    cursor_pos -= (len(latex_str) - len(unicode_str))
-
-            if text != new_text:
-                line_edit.setText(new_text)
-                line_edit.setCursorPosition(max(0, cursor_pos))
-
-        x_label_input.textChanged.connect(lambda: auto_replace_latex(x_label_input))
-        x_unit_input.textChanged.connect(lambda: auto_replace_latex(x_unit_input))
-        y_label_input.textChanged.connect(lambda: auto_replace_latex(y_label_input))
-        y_unit_input.textChanged.connect(lambda: auto_replace_latex(y_unit_input))
-        z_label_input.textChanged.connect(lambda: auto_replace_latex(z_label_input))
-        z_unit_input.textChanged.connect(lambda: auto_replace_latex(z_unit_input))
-
 
         layout.addWidget(QLabel("X-Axis (Probe) Label:"), 0, 0)
         layout.addWidget(x_label_input, 0, 1)
@@ -2672,7 +3028,7 @@ class SignalPlotterApp(QMainWindow):
         y_idx = self.y_slider.value()
         color = self.plot_colors[self.held_y_slices_count % len(self.plot_colors)]
         y_pos_val = self.current_y_values[y_idx]
-        name = f'{y_pos_val:.1f} {self.global_y_unit}'
+        name = f'{y_pos_val:.2f} {self.global_y_unit}'
         x_data, y_data = self.y_slice_curve.getData()
         curve = self.y_slice_plot_widget.plot(x_data, y_data,
                                               pen=pg.mkPen(color=color, width=2, style=Qt.PenStyle.DashLine), name=name)
@@ -2775,6 +3131,7 @@ class SignalPlotterApp(QMainWindow):
             self.x_values_interp = plot_x_vals
             self.y_values_interp = plot_y_vals
 
+        # Get levels before rendering to prevent float levels crash
         d_min, d_max = np.min(self.current_signal_data), np.max(self.current_signal_data)
 
         if reset_levels:
@@ -2916,6 +3273,18 @@ class SignalPlotterApp(QMainWindow):
         self.tab_widget.addTab(pfid_fit_tab, "PFID Fit")
         self.tab_widget.setCurrentWidget(pfid_fit_tab)
 
+    def _launch_artifact_fit_tab(self):
+        if not self.data_loaded: return
+        self._data_modified = True
+        artifact_fit_tab = ArtifactGlobalFitApp(
+            x_axis_data=self.current_x_values, y_axis_data=self.current_y_values, two_d_spectrum_data=self.current_signal_data,
+            parent=self.tab_widget,
+            x_axis_label=self.global_x_label, y_axis_label=self.global_y_label, z_axis_label=self.global_z_label,
+            x_axis_unit=self.global_x_unit, y_axis_unit=self.global_y_unit, z_axis_unit=self.global_z_unit
+        )
+        self.tab_widget.addTab(artifact_fit_tab, "Artifact Global Fit")
+        self.tab_widget.setCurrentWidget(artifact_fit_tab)
+
     def _save_project_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save Project", "", "Kaalen Project (*.specdatpp *.json)")
         if file_path:
@@ -2995,6 +3364,16 @@ class SignalPlotterApp(QMainWindow):
                         'ui': self._get_ui_state(widget)
                     })
 
+                elif isinstance(widget, ArtifactGlobalFitApp):
+                    tab_data = {
+                        'type': 'ArtifactGlobalFitApp',
+                        'name': tab_name,
+                        'ui': self._get_ui_state(widget)
+                    }
+                    if hasattr(widget, 'last_results') and widget.last_results:
+                        tab_data['last_results'] = [to_list(item) for item in widget.last_results]
+                    state['tabs'].append(tab_data)
+
                 elif isinstance(widget, GaussianFitterApp):
                     state['tabs'].append({
                         'type': 'GaussianFitterApp',
@@ -3010,7 +3389,7 @@ class SignalPlotterApp(QMainWindow):
                             'slice_value': widget.slice_value,
                             'slice_unit': widget.slice_unit
                         },
-                        'fixed_peaks': [to_list(p) for p in tab_data.get('fixed_peaks', [])],
+                        'fixed_peaks': [to_list(p) for p in widget.fixed_peaks],
                         'fitted_params': to_list(widget.fitted_params) if widget.fitted_params is not None else None,
                         'fitted_errors': to_list(widget.fitted_errors) if widget.fitted_errors is not None else None
                     })
@@ -3029,7 +3408,7 @@ class SignalPlotterApp(QMainWindow):
                             'slice_value': widget.slice_value,
                             'slice_unit': widget.slice_unit
                         },
-                        'fixed_components': [to_list(c) for c in tab_data.get('fixed_components', [])],
+                        'fixed_components': [to_list(c) for c in widget.fixed_components],
                         'fitted_params': to_list(widget.fitted_params) if widget.fitted_params is not None else None,
                         'fitted_errors': to_list(widget.fitted_errors) if widget.fitted_errors is not None else None
                     })
@@ -3106,6 +3485,7 @@ class SignalPlotterApp(QMainWindow):
                     self._set_ui_state(self.centralwidget_MW, state['main_ui_state'])
 
                 if 'notes_text' in state and hasattr(self, 'notes_text_edit'):
+                    # Block signals briefly so loading notes doesn't trigger the "Unsaved changes" flag
                     self.notes_text_edit.blockSignals(True)
                     self.notes_text_edit.setPlainText(state.get('notes_text', ""))
                     self.notes_text_edit.blockSignals(False)
@@ -3167,42 +3547,62 @@ class SignalPlotterApp(QMainWindow):
                     self._set_ui_state(app_instance, tab_data['ui'])
                     self.tab_widget.addTab(app_instance, tab_data['name'])
 
+                elif tab_type == 'ArtifactGlobalFitApp':
+                    app_instance = ArtifactGlobalFitApp(
+                        x_axis_data=self.current_x_values, y_axis_data=self.current_y_values, two_d_spectrum_data=self.current_signal_data,
+                        parent=self.tab_widget, x_axis_label=self.global_x_label, y_axis_label=self.global_y_label, z_axis_label=self.global_z_label,
+                        x_axis_unit=self.global_x_unit, y_axis_unit=self.global_y_unit, z_axis_unit=self.global_z_unit
+                    )
+                    self._set_ui_state(app_instance, tab_data['ui'])
+                    if 'last_results' in tab_data:
+                        res = tab_data['last_results']
+                        if len(res) == 11:
+                            reconstructed_tuple = (
+                                to_arr(res[0]), to_arr(res[1]), res[2], res[3], res[4], res[5], to_arr(res[6]), to_arr(res[7]),
+                                to_arr(res[8]), res[9], res[10]
+                            )
+                        else:
+                            # Fallback if loading a project saved prior to adding t0 parameter
+                            reconstructed_tuple = (
+                                to_arr(res[0]), to_arr(res[1]), 0.0, res[2], res[3], res[4], to_arr(res[5]), to_arr(res[6]),
+                                to_arr(res[7]), res[8], res[9]
+                            )
+                        app_instance.plot_results(reconstructed_tuple)
+                    self.tab_widget.addTab(app_instance, tab_data['name'])
+
                 elif tab_type == 'GaussianFitterApp':
-                    kwargs = tab_data['init_kwargs']
-                    app_instance = GaussianFitterApp(parent=self.tab_widget, x_data=to_arr(kwargs['x_data']), y_data=to_arr(kwargs['y_data']), fitting_function_type=kwargs['fitting_function_type'], xlabel=kwargs['xlabel'], ylabel=kwargs['ylabel'], slice_axis_name=kwargs['slice_axis_name'], slice_value=kwargs['slice_value'], slice_unit=kwargs['slice_unit'])
+                    kwargs = tab_data.get('init_kwargs', {})
+                    app_instance = GaussianFitterApp(self, **kwargs)
                     self._set_ui_state(app_instance, tab_data['ui'])
                     app_instance.fixed_peaks = [tuple(p) for p in tab_data.get('fixed_peaks', [])]
-
-                    if tab_data.get('fitted_params') is not None:
-                        app_instance.fitted_params = to_arr(tab_data['fitted_params'])
-                        app_instance.fitted_errors = to_arr(tab_data['fitted_errors'])
+                    app_instance.fitted_params = to_arr(tab_data.get('fitted_params'))
+                    app_instance.fitted_errors = to_arr(tab_data.get('fitted_errors'))
+                    if app_instance.fitted_params is not None:
                         app_instance.display_fitted_parameters()
-                        app_instance.export_button.setDisabled(False)
-
+                        app_instance.export_button.setEnabled(True)
                     app_instance.update_plot()
                     self.tab_widget.addTab(app_instance, tab_data['name'])
 
                 elif tab_type == 'ExponentialFitterApp':
-                    kwargs = tab_data['init_kwargs']
-                    app_instance = ExponentialFitterApp(parent=self.tab_widget, x_data=to_arr(kwargs['x_data']), y_data=to_arr(kwargs['y_data']), xlabel=kwargs['xlabel'], ylabel=kwargs['ylabel'], slice_axis_name=kwargs['slice_axis_name'], slice_value=kwargs['slice_value'], slice_unit=kwargs['slice_unit'])
+                    kwargs = tab_data.get('init_kwargs', {})
+                    app_instance = ExponentialFitterApp(self, **kwargs)
                     self._set_ui_state(app_instance, tab_data['ui'])
-                    app_instance.fixed_components = [tuple(c) for c in tab_data.get('fixed_components', [])]
-
-                    if tab_data.get('fitted_params') is not None:
-                        app_instance.fitted_params = to_arr(tab_data['fitted_params'])
-                        app_instance.fitted_errors = to_arr(tab_data['fitted_errors'])
+                    app_instance.fixed_components = [list(c) for c in tab_data.get('fixed_components', [])]
+                    app_instance.fitted_params = to_arr(tab_data.get('fitted_params'))
+                    app_instance.fitted_errors = to_arr(tab_data.get('fitted_errors'))
+                    if app_instance.fitted_params is not None:
                         app_instance.display_fitted_parameters()
-                        app_instance.export_button.setDisabled(False)
-
+                        app_instance.export_button.setEnabled(True)
                     app_instance.update_plot()
                     self.tab_widget.addTab(app_instance, tab_data['name'])
 
-            self._current_project_file = file_path
             self._data_modified = False
             self._update_window_title()
 
         except Exception as e:
             QMessageBox.critical(self, "Load Error", f"Failed to load project: {e}")
+            import traceback
+            traceback.print_exc()
 
     def closeEvent(self, event):
         if self._data_modified:
@@ -3210,8 +3610,7 @@ class SignalPlotterApp(QMainWindow):
                                          "You have unsaved changes. Do you want to save before exiting?",
                                          QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
             if reply == QMessageBox.StandardButton.Save:
-                save_successful = self._save_project()
-                if not save_successful:
+                if not self._save_project():
                     event.ignore()
                     return
             elif reply == QMessageBox.StandardButton.Cancel:
@@ -3222,8 +3621,23 @@ class SignalPlotterApp(QMainWindow):
 
 
 if __name__ == '__main__':
+    if sys.platform == 'win32':
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('dataviewer2D.Kaalen_app.3.0')
+        except AttributeError:
+            pass
+
+    app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    palette = app.palette()
+    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.black)
+    palette.setColor(QPalette.ColorRole.Base, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.blue)
+    palette.setColor(QPalette.ColorRole.Highlight, Qt.GlobalColor.lightGray)
+    app.setPalette(palette)
     window = SignalPlotterApp()
-    time.sleep(3)
     window.show()
 
     if len(sys.argv) > 1:
@@ -3232,7 +3646,6 @@ if __name__ == '__main__':
             try:
                 window._load_project_from_path(file_to_open)
             except Exception as e:
-                QMessageBox.critical(window, "Error Opening Project", f"Failed to load project from '{file_to_open}': {e}")
+                print(f"Error loading file from command line: {e}")
 
-    splash.finish(window)
     sys.exit(app.exec())
