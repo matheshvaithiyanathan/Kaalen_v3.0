@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow_CA</class>
+ <widget class="QMainWindow" name="MainWindow_CA">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1248</width>
+    <height>1159</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #fafff5 
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget_CA">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QWidget" name="widget_CA" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="2,3">
+       <property name="leftMargin">
+        <number>1</number>
+       </property>
+       <property name="topMargin">
+        <number>1</number>
+       </property>
+       <property name="rightMargin">
+        <number>1</number>
+       </property>
+       <property name="bottomMargin">
+        <number>1</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="widget_2_CA" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>1</number>
+          </property>
+          <property name="rightMargin">
+           <number>1</number>
+          </property>
+          <property name="bottomMargin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="QWidget" name="widget_4_CA" native="true">
+            <layout class="QGridLayout" name="gridLayout">
+             <property name="leftMargin">
+              <number>1</number>
+             </property>
+             <property name="topMargin">
+              <number>1</number>
+             </property>
+             <property name="rightMargin">
+              <number>1</number>
+             </property>
+             <property name="bottomMargin">
+              <number>1</number>
+             </property>
+             <item row="1" column="2">
+              <widget class="QLabel" name="label_4_CA">
+               <property name="text">
+                <string>Probe Max:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3_CA">
+               <property name="text">
+                <string>Probe Min:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_5_CA">
+               <property name="text">
+                <string>Tau Guess (ps):</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="probe_min_CA"/>
+             </item>
+             <item row="1" column="3">
+              <widget class="QLineEdit" name="probe_max_CA"/>
+             </item>
+             <item row="2" column="3">
+              <widget class="QLineEdit" name="pulse_initial_guess_CA"/>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="label_6_CA">
+               <property name="text">
+                <string>Pulse Width:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="Tau_initial_guesses_CA"/>
+             </item>
+             <item row="3" column="0" colspan="3">
+              <widget class="QWidget" name="widget_9_CA" native="true">
+               <layout class="QGridLayout" name="gridLayout_2">
+                <item row="1" column="1">
+                 <widget class="QComboBox" name="comboBox_CA">
+                  <item>
+                   <property name="text">
+                    <string>Linear</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Cubic</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Nearest</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>None</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QPushButton" name="pushButton_CA">
+                  <property name="styleSheet">
+                   <string notr="true">background-color: #b6d7a8  ;</string>
+                  </property>
+                  <property name="text">
+                   <string>Run Analysis</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QPushButton" name="pushButton_2_CA">
+                  <property name="text">
+                   <string>Export Fitted Results</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_7_CA">
+                  <property name="text">
+                   <string>Probes to Plot:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="lineEdit_7_CA"/>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QComboBox" name="comboBox_2_CA">
+                  <item>
+                   <property name="text">
+                    <string>x1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x3</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>x5</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_interpolation_CA">
+                  <property name="text">
+                   <string>Interpolate DAS</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLineEdit" name="time_max_CA"/>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_CA">
+               <property name="text">
+                <string>Time Min:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="time_min_CA"/>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_2_CA">
+               <property name="text">
+                <string>Time Max:</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="widget_5_CA" native="true">
+            <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="0">
+              <widget class="QTextEdit" name="textEdit_CA"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget_3_CA" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,1,1">
+          <item>
+           <widget class="PlotWidget" name="widget_6_CA" native="true"/>
+          </item>
+          <item>
+           <widget class="PlotWidget" name="widget_7_CA" native="true"/>
+          </item>
+          <item>
+           <widget class="PlotWidget" name="widget_8" native="true"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1248</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
