@@ -29,7 +29,7 @@ Kaalen is a intuitive desktop application for visualizing and analyzing **Time-r
 ![Description of the image](Artifact_fit.png)
 
 </div>
----
+
 * **Automated Guesses**: Use **Singular Value Decomposition (SVD)** to automatically generate initial guesses for decay constants ($τ$).
 * **Convoluted Model**: Incorporate instrument response into the fit using an analytical Gaussian-convoluted exponential model, with adjustable $t_0$ (time zero) and FWHM (Full Width at Half Maximum).
 * **Fit Reporting**: View a detailed **lmfit** report with best-fit parameters, uncertainties, and R-squared value.
