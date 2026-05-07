@@ -2392,7 +2392,7 @@ class ArtifactGlobalFitApp(QMainWindow):
         self.export_button.setEnabled(True)
 
         formatted_y_unit = _format_unit_for_display(self.y_axis_unit)
-        self.labels = ["G(t)", "G'(t)", "G''(t)", "CS(t)"]
+        self.labels = ["G(t)", "G'(t)", "G''(t)", "Constant"]
         for tau in best_taus:
             self.labels.append(f"τ = {tau:.3g} {formatted_y_unit}")
 
@@ -2436,7 +2436,7 @@ class ArtifactGlobalFitApp(QMainWindow):
         except ValueError:
             multiplier = 1
 
-        for i in range(4, A_final.shape[0]):
+        for i in range(3, A_final.shape[0]):
             interp_probe, interp_A = self._get_interpolated_1d_data(probe, A_final[i, :], method, multiplier)
             ax2.plot(interp_probe, interp_A, linewidth=2, label=self.labels[i])
 
