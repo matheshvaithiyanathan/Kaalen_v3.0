@@ -6,6 +6,7 @@ import sys
 import time
 import ctypes
 from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
+from PyQt6.QtCore import Qt, QLocale #To ignore windows regional setting for decimals
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
 
@@ -25,6 +26,7 @@ if __name__ == '__main__':
             pass
 
     app = QApplication(sys.argv)
+    QLocale.setDefault(QLocale(QLocale.Language.C)) # To ignore windows regional setting. 
     app.setStyle('Fusion')
     palette = app.palette()
     palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
