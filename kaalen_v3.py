@@ -2898,14 +2898,20 @@ class SignalPlotterApp(QMainWindow):
         widget.deleteLater()
 
     def _apply_axis_labels(self):
-        self.signal_plot_widget.setLabel('bottom', f"{self.global_x_label} [{self.global_x_unit}]")
-        self.signal_plot_widget.setLabel('left', f"{self.global_y_label} [{self.global_y_unit}]")
+        # Format the units first
+        fmt_x_unit = _format_unit_for_display(self.global_x_unit)
+        fmt_y_unit = _format_unit_for_display(self.global_y_unit)
+        fmt_z_unit = _format_unit_for_display(self.global_z_unit)
 
-        self.x_slice_plot_widget.setLabel('bottom', f"{self.global_y_label} [{self.global_y_unit}]")
-        self.x_slice_plot_widget.setLabel('left', f"{self.global_z_label} [{self.global_z_unit}]")
+        # Apply the formatted units to the plots
+        self.signal_plot_widget.setLabel('bottom', f"{self.global_x_label} [{fmt_x_unit}]")
+        self.signal_plot_widget.setLabel('left', f"{self.global_y_label} [{fmt_y_unit}]")
 
-        self.y_slice_plot_widget.setLabel('bottom', f"{self.global_x_label} [{self.global_x_unit}]")
-        self.y_slice_plot_widget.setLabel('left', f"{self.global_z_label} [{self.global_z_unit}]")
+        self.x_slice_plot_widget.setLabel('bottom', f"{self.global_y_label} [{fmt_y_unit}]")
+        self.x_slice_plot_widget.setLabel('left', f"{self.global_z_label} [{fmt_z_unit}]")
+
+        self.y_slice_plot_widget.setLabel('bottom', f"{self.global_x_label} [{fmt_x_unit}]")
+        self.y_slice_plot_widget.setLabel('left', f"{self.global_z_label} [{fmt_z_unit}]")
 
     def edit_axis_labels(self):
         dialog = QDialog(self)
