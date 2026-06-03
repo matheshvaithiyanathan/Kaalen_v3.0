@@ -27,6 +27,10 @@ if __name__ == '__main__':
         except AttributeError:
             pass
 
+    if hasattr(sys, '_MEIPASS'):
+        plugin_path = os.path.join(sys._MEIPASS, 'PyQt6', 'Qt6', 'plugins')
+        os.environ['QT_PLUGIN_PATH'] = plugin_path
+
     app = QApplication(sys.argv)
     QLocale.setDefault(QLocale(QLocale.Language.C)) # To ignore windows regional setting. 
     app.setStyle('Fusion')
