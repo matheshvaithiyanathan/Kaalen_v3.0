@@ -1875,7 +1875,7 @@ class ChirpCorrectionApp(QMainWindow):
         self.contour_DC.addItem(self.image_item_raw)
         self.contour_DC.scene().sigMouseClicked.connect(self.on_contour_clicked)
 
-        self.scatter = pg.ScatterPlotItem(size=10, pen=pg.mkPen('k'), brush=pg.mkBrush(255, 0, 0, 255))
+        self.scatter = pg.ScatterPlotItem(size=6, pen=pg.mkPen('k'), brush=pg.mkBrush(255, 0, 0, 255))
         self.contour_DC.addItem(self.scatter)
         self.fit_line = self.contour_DC.plot(pen=pg.mkPen('g', width=3, style=Qt.PenStyle.DashLine))
 
