@@ -1,11 +1,13 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_all
+pg_datas, pg_binaries, pg_hiddenimports = collect_all('pyqtgraph')
+qt_datas, qt_binaries, qt_hiddenimports = collect_all('PyQt6')
 a = Analysis(
-    ['kaalen_v3.py'], # <-- UPDATED: Points to your actual Python script
+    ['kaalen_v3.py'], 
     pathex=['.'], 
-    binaries=[],
+    binaries=[] + pg_binaries + qt_binaries,
     datas=[
         ('pfid_tab.ui', '.'),
         ('global_fit.ui', '.'),
@@ -16,9 +18,11 @@ a = Analysis(
         ('coherent_artifact_included_GF.ui', '.'),
         ('icon.ico', '.'), 
         ('icon.png', '.'),
-    ],
+    ] + pg_datas + qt_datas,
     hiddenimports=[
         # --- The new band-aids for the crash ---
+        'PyQt6.QtSvg',
+        'pyqtgraph.exporters',
         'pkg_resources',
         'jaraco',
         'jaraco.text',
@@ -45,7 +49,7 @@ a = Analysis(
         'scipy.linalg.cython_blas', 
         'scipy.linalg.cython_lapack',
         'scipy.optimize.minpack',
-    ],
+    ]+ pg_hiddenimports + qt_hiddenimports,,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
