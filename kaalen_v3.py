@@ -6,6 +6,8 @@ import sys
 import time
 import ctypes
 from PyQt6.QtWidgets import QApplication, QSplashScreen, QMessageBox
+import pyqtgraph.exporters
+import PyQt6.QtSvg
 from PyQt6.QtCore import Qt, QLocale #To ignore windows regional setting for decimals
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
