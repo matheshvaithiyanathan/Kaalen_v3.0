@@ -12,6 +12,13 @@ from PyQt6.QtCore import Qt, QLocale #To ignore windows regional setting for dec
 from PyQt6.QtGui import QPixmap, QColor, QIcon, QFont, QPalette
 from PyQt6.QtCore import Qt
 
+import pyqtgraph.exporters
+# Filter out the SVG exporter so it never appears in the right-click menu
+pg.exporters.Exporter.Exporters = [
+    exp for exp in pg.exporters.Exporter.Exporters 
+    if exp.__name__ != 'SVGExporter'
+]
+
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
