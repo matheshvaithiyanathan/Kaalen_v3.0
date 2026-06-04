@@ -113,11 +113,12 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 
-print(f"Pandas Version: {pd.__version__}")
-print(f"NumPy Version: {np.__version__}")
-print(f"PyQtGraph Version: {pg.__version__}")
-print(f"Scipy Version: {scipy.__version__}")
-print(f"LMFIT Version: {lmfit.__version__}")
+print('Loading Kaalen v3... \nDeveloped by InstrumentsResponse')
+#Pandas Version: 2.2.3
+#NumPy Version: 2.2.5
+#PyQtGraph Version: 0.13.7
+#Scipy Version: 1.15.3
+#LMFIT Version: 1.3.4
 
 
 def symlog_transform(data, linthresh=1.0):
