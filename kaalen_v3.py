@@ -2353,7 +2353,7 @@ class ArtifactGlobalFitApp(QMainWindow):
             self.time_max_input.setText("80.0")
 
         self.d_input.setText("0.028")
-        self.tau_guesses_input.setText("0.11, 1.27, 8.33, 2.0, 20.0")
+        self.tau_guesses_input.setText("1, 5, 10")
         self.probes_input.setText("420, 530, 640")
 
     def update_axis_labels(self, x_label, x_unit, y_label, y_unit, z_label, z_unit):
