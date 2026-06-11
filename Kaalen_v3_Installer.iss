@@ -1,8 +1,8 @@
 [Setup]
 AppName=Kaalen v3
 AppVersion=3.0
-AppPublisher=Mathesh Vaithiyanathan
-VersionInfoCompany=Mathesh Vaithiyanathan
+AppPublisher=InstrumentsResponse
+VersionInfoCompany=InstrumentsResponse
 AppId={{50E0D2F8-3A7B-46C9-A1C8-710E1C92E152}
 DefaultDirName={autopf}\Kaalen v3
 DefaultGroupName=Kaalen v3
