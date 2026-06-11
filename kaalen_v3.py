@@ -1,4 +1,4 @@
-# Copyright (c) [2026] [Mathesh Vaithiyanathan]
+# Copyright (c) [2026] [InstrumentsResponse]
 # This software is licensed under the MIT License.
 # See the LICENSE file for details.
 import os
