@@ -21,7 +21,7 @@ Root: "HKLM"; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Kaale
 
 [Files]
 Source: "dist\Kaalen_v3\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "LICENSE.txt"
+Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Kaalen v3"; Filename: "{app}\Kaalen_v3.exe"; IconFilename: "{app}\Kaalen_v3.exe"; WorkingDir: "{app}"
